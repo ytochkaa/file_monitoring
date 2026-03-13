@@ -4,6 +4,8 @@ project(file_monitoring LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_AUTOMOC ON)
+
 set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES 
     "C:/msys64/mingw64/include/c++/15.2.0"
     "C:/msys64/mingw64/include/c++/15.2.0/x86_64-w64-mingw32"
@@ -18,8 +20,10 @@ find_package(QT NAMES Qt5 REQUIRED COMPONENTS Core)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 
 add_executable(${PROJECT_NAME}
-  file_monitoring.cpp
-)
+    file_monitoring.cpp
+    monitoring.cpp
+    monitoring.h
+ )
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE

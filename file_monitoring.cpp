@@ -4,6 +4,8 @@
 #include <QCoreApplication>
 #include <QFileInfo>
 #include <QDateTime>
+
+#include "Monitoring.h"
 // QFileSystemWatcher
 
 void itFile(const QString& path, QTextStream& out)
@@ -11,16 +13,10 @@ void itFile(const QString& path, QTextStream& out)
     QFileInfo file(path);
 
     if (!file.exists()) {
-        out << "The path does not exist:" << path << Qt::endl;
+        out << "Не существует:" << path << Qt::endl;
         return;
     }
-    out << "Directory:" << file.absolutePath() << Qt::endl;
-
-    if (file.isFile()) {
-        qDebug() << "It is file";
-    } else if (file.isDir()) {
-        qDebug() << "It is dir";
-    }
+    out << "Расположение:" << file.absolutePath() << Qt::endl;
 
     qDebug() << "Существует:" << file.exists();
     qDebug() << "Изменён:" << file.lastModified().toString();
@@ -37,6 +33,21 @@ int main(int argc, char* argv[])
     QTextStream out(stdout);
 
     itFile(startPath, out);
+
+    Monitoring monitor;
+
+    monitor.addFile(startPath);
+
+    // Изменениефайла
+    QObject::connect(&monitor, &Monitoring::fileModified, [&](const QString& path) {
+        qDebug() << "File modified:" << path;
+        itFile(path, out);
+    });
+
+    // Удаление файла
+    QObject::connect(&monitor, &Monitoring::fileDeleted, [&](const QString& path) {
+        qDebug() << "File deleted:" << path;
+    });
 
     return 0;
 }

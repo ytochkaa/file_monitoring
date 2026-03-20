@@ -6,23 +6,23 @@
 #include <QDateTime>
 
 #include "Monitoring.h"
+#include "logger.h"
 // QFileSystemWatcher
-
-void itFile(const QString& path, QTextStream& out)
-{
+/*
+void itFile(const QString &path, QTextStream &out) {
     QFileInfo file(path);
 
     if (!file.exists()) {
-        out << "Не существует:" << path << Qt::endl;
+        qDebug() << "Не существует:" << path;
         return;
     }
-    out << "Расположение:" << file.absolutePath() << Qt::endl;
+    qDebug() << "Расположение:" << file.absolutePath();
 
     qDebug() << "Существует:" << file.exists();
     qDebug() << "Изменён:" << file.lastModified().toString();
-    qDebug() << "Размер:" << file.size() << "байт";
+    qDebug() << "Размер:" << file.size()  << "байт";
 }
-
+*/
 int main(int argc, char* argv[])
 {
     QCoreApplication a(argc, argv);
@@ -30,24 +30,29 @@ int main(int argc, char* argv[])
     QString startPath = "C:/Users/darya/Desktop/Combez/8_semester/Development of information security tools/Сompil_cmake.txt";
     // QString startPath = "C:/Users/darya/Desktop/Combez/7_semester/Number_Theory_Methods_in_Cryptography";
 
-    QTextStream out(stdout);
+    // QTextStream out(stdout);
 
-    itFile(startPath, out);
+    // itFile(startPath, out);
 
     Monitoring monitor;
 
     monitor.addFile(startPath);
 
-    // Изменениефайла
+    // Изменение файла
     QObject::connect(&monitor, &Monitoring::fileModified, [&](const QString& path) {
-        qDebug() << "File modified:" << path;
-        itFile(path, out);
+        // qDebug() << "Файл изменён" << path;
+        // itFile(path, out);
+        Logger::logModified(path);
+        // itFile(path, out);
     });
 
     // Удаление файла
     QObject::connect(&monitor, &Monitoring::fileDeleted, [&](const QString& path) {
-        qDebug() << "File deleted:" << path;
+        // qDebug() << "Файл удалён:" << path;
+        Logger::logDeleted(path);
+        // itFile(path, out);
     });
 
-    return 0;
+    // return 0;
+    return a.exec();
 }

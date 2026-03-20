@@ -23,6 +23,8 @@ add_executable(${PROJECT_NAME}
     file_monitoring.cpp
     monitoring.cpp
     monitoring.h
+    logger.cpp
+    logger.h
  )
 
 target_link_libraries(${PROJECT_NAME}

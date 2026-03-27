@@ -8,8 +8,9 @@
 #include "Monitoring.h"
 #include "logger.h"
 // QFileSystemWatcher
-/*
-void itFile(const QString &path, QTextStream &out) {
+
+void itFile(const QString& path, QTextStream& out)
+{
     QFileInfo file(path);
 
     if (!file.exists()) {
@@ -20,19 +21,23 @@ void itFile(const QString &path, QTextStream &out) {
 
     qDebug() << "Существует:" << file.exists();
     qDebug() << "Изменён:" << file.lastModified().toString();
-    qDebug() << "Размер:" << file.size()  << "байт";
+    qDebug() << "Размер:" << file.size() << "байт";
 }
-*/
+
 int main(int argc, char* argv[])
 {
     QCoreApplication a(argc, argv);
 
-    QString startPath = "C:/Users/darya/Desktop/Combez/8_semester/Development of information security tools/Сompil_cmake.txt";
+    qDebug() << "ВКЛЮЧИЛА СЛЕЖКУ";
+
+    // QString startPath = "C:/Users/darya/Desktop/Combez/8_semester/Development of information security tools/Сompil_cmake.txt";
     // QString startPath = "C:/Users/darya/Desktop/Combez/7_semester/Number_Theory_Methods_in_Cryptography";
+    QString startPath = "C:/Users/darya/Desktop/Combez/8_semester/Programming technologies/file_monitoring/file_monitoring/tests/test_case1.txt";
+    // QString startPath = "C:\\Users\\darya\\Desktop\\Combez\\8_semester\\Programming technologies\\file_monitoring\\file_monitoring\\tests\\test_case1.txt";
 
-    // QTextStream out(stdout);
+    QTextStream out(stdout);
 
-    // itFile(startPath, out);
+    itFile(startPath, out);
 
     Monitoring monitor;
 
@@ -40,17 +45,19 @@ int main(int argc, char* argv[])
 
     // Изменение файла
     QObject::connect(&monitor, &Monitoring::fileModified, [&](const QString& path) {
-        // qDebug() << "Файл изменён" << path;
+        qDebug() << "Файл изменён" << path;
         // itFile(path, out);
-        Logger::logModified(path);
+        Logger logger;
         // itFile(path, out);
+        logger.logModified(path);
     });
 
     // Удаление файла
     QObject::connect(&monitor, &Monitoring::fileDeleted, [&](const QString& path) {
-        // qDebug() << "Файл удалён:" << path;
-        Logger::logDeleted(path);
+        qDebug() << "Файл удалён:" << path;
+        Logger logger;
         // itFile(path, out);
+        logger.logDeleted(path);
     });
 
     // return 0;

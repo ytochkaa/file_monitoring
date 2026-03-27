@@ -4,10 +4,10 @@
 #include <QDateTime>
 #include <QDebug>
 
-Logger::Logger(const QString& logFilePath)
-    : logFile(logFilePath)
+Logger::Logger()
 {
 }
+
 // добавить время когда был изменён и info(размер и т.д.)
 void Logger::logModified(const QString& path)
 {

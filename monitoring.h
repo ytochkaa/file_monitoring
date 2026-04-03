@@ -7,6 +7,7 @@ class Monitoring : public QObject
     Q_OBJECT
 
 public:
+    QString getFileInfo(const QString& path);
     explicit Monitoring(QObject* parent = nullptr);
     void addFile(const QString& path);
     void removeFile(const QString& path);

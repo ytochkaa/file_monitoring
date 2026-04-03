@@ -1,5 +1,30 @@
 #include "Monitoring.h"
 #include <QFileInfo>
+#include <QObject>
+#include <QFileSystemWatcher>
+#include <QStringList>
+#include <QTextStream>
+#include <QDateTime>
+
+QString itFile(const QString& path)
+{
+    QFileInfo file(path);
+
+    QString result;
+    QTextStream out(&result);
+
+    if (!file.exists()) {
+        out << "Не существует:" << path;
+        return result;
+    } else {
+        out << "Расположение:" << file.absolutePath() << "\n";
+        out << "Существует:" << file.exists() << "\n";
+        out << "Изменён:" << file.lastModified().toString() << "\n";
+        out << "Размер:" << file.size() << "байт" << "\n";
+
+        return result;
+    }
+}
 
 Monitoring::Monitoring(QObject* parent)
     : QObject(parent)

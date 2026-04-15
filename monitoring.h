@@ -9,6 +9,8 @@ class Monitoring : public QObject
 public:
     QString getFileInfo(const QString& path);
     explicit Monitoring(QObject* parent = nullptr);
+
+public slots:
     void addFile(const QString& path);
     void removeFile(const QString& path);
 

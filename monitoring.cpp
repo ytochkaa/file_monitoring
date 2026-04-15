@@ -1,43 +1,49 @@
-#include "Monitoring.h"
+#include "monitoring.h"
 #include <QFileInfo>
 #include <QObject>
 #include <QFileSystemWatcher>
 #include <QStringList>
 #include <QTextStream>
 #include <QDateTime>
+#include <QDebug>
 
-QString itFile(const QString& path)
+QString Monitoring::getFileInfo(const QString& path)
 {
     QFileInfo file(path);
-
     QString result;
     QTextStream out(&result);
 
     if (!file.exists()) {
-        out << "Не существует:" << path;
-        return result;
-    } else {
-        out << "Расположение:" << file.absolutePath() << "\n";
-        out << "Существует:" << file.exists() << "\n";
-        out << "Изменён:" << file.lastModified().toString() << "\n";
-        out << "Размер:" << file.size() << "байт" << "\n";
-
+        qDebug() << "Не существует:" << path;
         return result;
     }
+
+    qDebug() << "Расположение: " << file.absolutePath() << "\n";
+    qDebug() << "Существует: " << file.exists() << "\n";
+    qDebug() << "Изменён: " << file.lastModified().toString() << "\n";
+    qDebug() << "Размер: " << file.size() << " байт\n";
+
+    return result;
 }
 
 Monitoring::Monitoring(QObject* parent)
     : QObject(parent)
 {
-    connect(&watcher, &QFileSystemWatcher::fileChanged,
-            this, &Monitoring::onFileChanged);
+    connect(&watcher, &QFileSystemWatcher::fileChanged, this, &Monitoring::onFileChanged);
 }
 
 void Monitoring::addFile(const QString& path)
 {
+    QFileInfo file(path);
+
+    if (!file.exists()) {
+        return;
+    }
+
     if (!monitoredFiles.contains(path)) {
-        monitoredFiles.append(path);
-        watcher.addPath(path);
+        if (watcher.addPath(path)) {
+            monitoredFiles.append(path);
+        }
     }
 }
 
@@ -55,6 +61,7 @@ void Monitoring::onFileChanged(const QString& path)
         emit fileModified(path);
         watcher.addPath(path);
     } else {
+        monitoredFiles.removeAll(path);
         emit fileDeleted(path);
     }
 }

@@ -2,6 +2,13 @@
 #include <QFileSystemWatcher>
 #include <QStringList>
 
+struct FileState
+{
+    QString path;
+    QDateTime lastModified;
+    int size;
+};
+
 class Monitoring : public QObject
 {
     Q_OBJECT
@@ -24,4 +31,5 @@ private slots:
 private:
     QFileSystemWatcher watcher;
     QStringList monitoredFiles;
+    QMap<QString, FileState> fileStates;
 };

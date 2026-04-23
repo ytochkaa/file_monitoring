@@ -1,35 +1,43 @@
-#include <QDir>
-#include <QDebug>
-#include <QTextStream>
 #include <QCoreApplication>
-#include <QFileInfo>
-#include <QDateTime>
+#include <QDebug>
 
-#include "monitoring.h"
+#include "command_input.h"
 #include "logger.h"
-// QFileSystemWatcher
+#include "monitoring.h"
 
 int main(int argc, char* argv[])
 {
+    qDebug() << "Запуск программы";
+
     QCoreApplication a(argc, argv);
 
-    qDebug() << "ВКЛЮЧИЛА СЛЕЖКУ";
-
-    // QString startPath = "...";
-
-    // QTextStream out(stdout);
-
-    // QString startPath = "C:/Users/darya/Desktop/Combez/8_semester/Development of information security tools/Сompil_cmake.txt";
-    // QString startPath = "C:/Users/darya/Desktop/Combez/7_semester/Number_Theory_Methods_in_Cryptography";
-    QString startPath = "C:/Users/darya/Desktop/Combez/8_semester/Programming technologies/file_monitoring/file_monitoring/tests/test_case1.txt";
-    // QString startPath = "C:\\Users\\darya\\Desktop\\Combez\\8_semester\\Programming technologies\\file_monitoring\\file_monitoring\\tests\\test_case1.txt";
-
-    QTextStream out(stdout);
-
     Monitoring monitor;
+    CommandReader reader;
 
-    monitor.addFile(startPath);
+    qDebug() << "Мониторинг запущен";
 
-    // return 0;
-    return a.exec();
+    QObject::connect(&reader, &CommandReader::addRequested, &monitor, &Monitoring::addFile);
+
+    QObject::connect(&reader, &CommandReader::removeRequested, &monitor, &Monitoring::removeFile);
+
+    QObject::connect(&reader, &CommandReader::exitRequested, &a, &QCoreApplication::quit);
+
+    QObject::connect(&monitor, &Monitoring::fileModified, [&](const QString& path) {
+        qDebug() << "Файл изменён:" << path;
+        Logger logger;
+        logger.logModified(path);
+    });
+
+    QObject::connect(&monitor, &Monitoring::fileDeleted, [&](const QString& path) {
+        qDebug() << "Файл удалён:" << path;
+        Logger logger;
+        logger.logDeleted(path);
+    });
+
+    reader.start();
+
+    int result = a.exec();
+    reader.wait();
+
+    return result;
 }

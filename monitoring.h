@@ -1,6 +1,9 @@
 #include <QObject>
 #include <QFileSystemWatcher>
 #include <QStringList>
+#include <QMap>
+#include <QDateTime>
+#include <QTimer>
 
 struct FileState
 {
@@ -27,9 +30,11 @@ signals:
 
 private slots:
     void onFileChanged(const QString& path);
+    void onTimerTick();
 
 private:
     QFileSystemWatcher watcher;
     QStringList monitoredFiles;
     QMap<QString, FileState> fileStates;
+    QTimer* timer;
 };

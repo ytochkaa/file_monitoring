@@ -1,4 +1,5 @@
 #include "monitoring.h"
+#include "directorywalker.h"
 #include <QFileInfo>
 #include <QObject>
 #include <QFileSystemWatcher>
@@ -15,6 +16,12 @@ static FileState makeFileState(const QString& path)
     state.lastModified = file.lastModified();
     state.size = file.exists() ? static_cast<int>(file.size()) : 0;
     return state;
+}
+
+static QString normalizedPath(const QFileInfo& file)
+{
+    const QString canonicalPath = file.canonicalFilePath();
+    return canonicalPath.isEmpty() ? file.absoluteFilePath() : canonicalPath;
 }
 
 QString Monitoring::getFileInfo(const QString& path)
@@ -53,19 +60,53 @@ void Monitoring::addFile(const QString& path)
         return;
     }
 
-    if (!monitoredFiles.contains(path)) {
-        if (watcher.addPath(path)) {
-            monitoredFiles.append(path);
-            fileStates[path] = makeFileState(path);
+    if (file.isDir()) {
+        DirectoryWalker walker;
+        const QStringList files = walker.listFilesRecursively(path);
+
+        for (const QString& filePath : files) {
+            addFile(filePath);
         }
+
+        return;
+    }
+
+    const QString filePath = normalizedPath(file);
+
+    if (!monitoredFiles.contains(filePath)) {
+        watcher.addPath(filePath);
+        monitoredFiles.append(filePath);
+        fileStates[filePath] = makeFileState(filePath);
     }
 }
 
 void Monitoring::removeFile(const QString& path)
 {
-    monitoredFiles.removeAll(path);
-    watcher.removePath(path);
-    fileStates.remove(path);
+    QFileInfo file(path);
+
+    if (file.exists() && file.isDir()) {
+        QString dirPath = normalizedPath(file);
+
+        if (!dirPath.endsWith('/') && !dirPath.endsWith('\\')) {
+            dirPath += '/';
+        }
+
+        const QStringList files = monitoredFiles;
+        for (const QString& filePath : files) {
+            if (filePath.startsWith(dirPath)) {
+                monitoredFiles.removeAll(filePath);
+                watcher.removePath(filePath);
+                fileStates.remove(filePath);
+            }
+        }
+
+        return;
+    }
+
+    const QString filePath = file.exists() ? normalizedPath(file) : path;
+    monitoredFiles.removeAll(filePath);
+    watcher.removePath(filePath);
+    fileStates.remove(filePath);
 }
 
 void Monitoring::onFileChanged(const QString& path)

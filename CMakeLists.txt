@@ -21,6 +21,8 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 
 add_executable(${PROJECT_NAME}
     command_input.h
+    directorywalker.cpp
+    directorywalker.h
     file_monitoring.cpp
     monitoring.cpp
     monitoring.h

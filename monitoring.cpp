@@ -7,6 +7,7 @@
 #include <QTextStream>
 #include <QDateTime>
 #include <QDebug>
+#include <QDir>
 
 static FileState makeFileState(const QString& path)
 {
@@ -18,27 +19,33 @@ static FileState makeFileState(const QString& path)
     return state;
 }
 
-static QString normalizedPath(const QFileInfo& file)
+static QString normalizePath(const QFileInfo& file)
 {
     const QString canonicalPath = file.canonicalFilePath();
-    return canonicalPath.isEmpty() ? file.absoluteFilePath() : canonicalPath;
+    const QString rawPath = canonicalPath.isEmpty() ? file.absoluteFilePath() : canonicalPath;
+    return QDir::cleanPath(QDir::fromNativeSeparators(rawPath));
+}
+
+static QString normalizePath(const QString& path)
+{
+    return normalizePath(QFileInfo(path));
 }
 
 QString Monitoring::getFileInfo(const QString& path)
 {
-    QFileInfo file(path);
+    QFileInfo file(normalizePath(path));
     QString result;
     QTextStream out(&result);
 
     if (!file.exists()) {
-        qDebug() << "Не существует:" << path;
+        out << "Не существует: " << path;
         return result;
     }
 
-    qDebug() << "Расположение: " << file.absolutePath() << "\n";
-    qDebug() << "Существует: " << file.exists() << "\n";
-    qDebug() << "Изменён: " << file.lastModified().toString() << "\n";
-    qDebug() << "Размер: " << file.size() << " байт\n";
+    out << "Расположение: " << file.absolutePath() << '\n';
+    out << "Существует: " << (file.exists() ? "да" : "нет") << '\n';
+    out << "Изменён: " << file.lastModified().toString(Qt::ISODate) << '\n';
+    out << "Размер: " << file.size() << " байт\n";
 
     return result;
 }
@@ -54,7 +61,8 @@ Monitoring::Monitoring(QObject* parent)
 
 void Monitoring::addFile(const QString& path)
 {
-    QFileInfo file(path);
+    const QString normalizedInput = normalizePath(path);
+    QFileInfo file(normalizedInput);
 
     if (!file.exists()) {
         return;
@@ -71,7 +79,7 @@ void Monitoring::addFile(const QString& path)
         return;
     }
 
-    const QString filePath = normalizedPath(file);
+    const QString filePath = normalizePath(file);
 
     if (!monitoredFiles.contains(filePath)) {
         watcher.addPath(filePath);
@@ -82,12 +90,13 @@ void Monitoring::addFile(const QString& path)
 
 void Monitoring::removeFile(const QString& path)
 {
-    QFileInfo file(path);
+    const QString normalizedInput = normalizePath(path);
+    QFileInfo file(normalizedInput);
 
     if (file.exists() && file.isDir()) {
-        QString dirPath = normalizedPath(file);
+        QString dirPath = normalizePath(file);
 
-        if (!dirPath.endsWith('/') && !dirPath.endsWith('\\')) {
+        if (!dirPath.endsWith('/')) {
             dirPath += '/';
         }
 
@@ -103,7 +112,7 @@ void Monitoring::removeFile(const QString& path)
         return;
     }
 
-    const QString filePath = file.exists() ? normalizedPath(file) : path;
+    const QString filePath = file.exists() ? normalizePath(file) : normalizedInput;
     monitoredFiles.removeAll(filePath);
     watcher.removePath(filePath);
     fileStates.remove(filePath);
@@ -111,16 +120,17 @@ void Monitoring::removeFile(const QString& path)
 
 void Monitoring::onFileChanged(const QString& path)
 {
-    QFileInfo info(path);
+    const QString normalized = normalizePath(path);
+    QFileInfo info(normalized);
 
     if (info.exists()) {
-        fileStates[path] = makeFileState(path);
-        emit fileModified(path);
-        watcher.addPath(path);
+        fileStates[normalized] = makeFileState(normalized);
+        emit fileModified(normalized);
+        watcher.addPath(normalized);
     } else {
-        monitoredFiles.removeAll(path);
-        fileStates.remove(path);
-        emit fileDeleted(path);
+        monitoredFiles.removeAll(normalized);
+        fileStates.remove(normalized);
+        emit fileDeleted(normalized);
     }
 }
 

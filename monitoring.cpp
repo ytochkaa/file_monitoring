@@ -69,7 +69,7 @@ void Monitoring::addFile(const QString& path)
 
     if (file.isDir()) {
         DirectoryWalker walker;
-        const QStringList files = walker.listFilesRecursively(path);
+        const QStringList files = walker.listFilesRecursively(normalizedInput);
 
         for (const QString& filePath : files) {
             addFile(filePath);
@@ -87,6 +87,7 @@ void Monitoring::addFile(const QString& path)
         }
         monitoredFiles.append(filePath);
         fileStates[filePath] = makeFileState(filePath);
+        emit fileAdded(filePath);
     }
 }
 
@@ -96,7 +97,8 @@ void Monitoring::removeFile(const QString& path)
     QFileInfo file(normalizedInput);
 
     if (file.exists() && file.isDir()) {
-        QString dirPath = normalizePath(file);
+        const QString dirBase = normalizePath(file);
+        QString dirPath = dirBase;
 
         if (!dirPath.endsWith('/')) {
             dirPath += '/';
@@ -104,7 +106,8 @@ void Monitoring::removeFile(const QString& path)
 
         const QStringList files = monitoredFiles;
         for (const QString& filePath : files) {
-            if (filePath.startsWith(dirPath)) {
+            const QString absFilePath = QDir::cleanPath(QDir::fromNativeSeparators(QFileInfo(filePath).absoluteFilePath()));
+            if (absFilePath == dirBase || absFilePath.startsWith(dirPath)) {
                 monitoredFiles.removeAll(filePath);
                 watcher.removePath(filePath);
                 fileStates.remove(filePath);

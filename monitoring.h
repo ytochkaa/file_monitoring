@@ -24,6 +24,7 @@ public slots:
     void removeFile(const QString& path);
 
 signals:
+    void fileAdded(const QString& path);
     void fileModified(const QString& path);
     void fileDeleted(const QString& path);
 

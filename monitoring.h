@@ -7,9 +7,8 @@
 
 struct FileState
 {
-    QString path;
     QDateTime lastModified;
-    int size;
+    long int size;
 };
 
 class Monitoring : public QObject

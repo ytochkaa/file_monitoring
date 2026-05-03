@@ -13,9 +13,8 @@ static FileState makeFileState(const QString& path)
 {
     QFileInfo file(path);
     FileState state;
-    state.path = path;
     state.lastModified = file.lastModified();
-    state.size = file.exists() ? static_cast<int>(file.size()) : 0;
+    state.size = file.exists() ? static_cast<long int>(file.size()) : 0;
     return state;
 }
 
@@ -82,7 +81,10 @@ void Monitoring::addFile(const QString& path)
     const QString filePath = normalizePath(file);
 
     if (!monitoredFiles.contains(filePath)) {
-        watcher.addPath(filePath);
+        if (!watcher.addPath(filePath)) {
+            qWarning() << "Не удалось добавить путь в watcher:" << filePath;
+            return;
+        }
         monitoredFiles.append(filePath);
         fileStates[filePath] = makeFileState(filePath);
     }
@@ -126,7 +128,9 @@ void Monitoring::onFileChanged(const QString& path)
     if (info.exists()) {
         fileStates[normalized] = makeFileState(normalized);
         emit fileModified(normalized);
-        watcher.addPath(normalized);
+        if (!watcher.files().contains(normalized) && !watcher.addPath(normalized)) {
+            qWarning() << "Не удалось повторно добавить путь в watcher:" << normalized;
+        }
     } else {
         monitoredFiles.removeAll(normalized);
         fileStates.remove(normalized);

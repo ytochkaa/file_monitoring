@@ -1,3 +1,6 @@
+#ifndef MONITORING_H
+#define MONITORING_H
+
 #include <QObject>
 #include <QFileSystemWatcher>
 #include <QStringList>
@@ -38,3 +41,5 @@ private:
     QMap<QString, FileState> fileStates;
     QTimer* timer;
 };
+
+#endif

@@ -3,8 +3,8 @@
 
 #include <QObject>
 #include <QFileSystemWatcher>
-#include <QStringList>
-#include <QMap>
+#include <QSet>
+#include <QHash>
 #include <QDateTime>
 #include <QTimer>
 
@@ -37,8 +37,8 @@ private slots:
 
 private:
     QFileSystemWatcher watcher;
-    QStringList monitoredFiles;
-    QMap<QString, FileState> fileStates;
+    QSet<QString> monitoredFiles;
+    QHash<QString, FileState> fileStates;
     QTimer* timer;
 };
 

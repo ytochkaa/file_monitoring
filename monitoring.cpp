@@ -1,11 +1,8 @@
 #include "monitoring.h"
 #include "directorywalker.h"
+#include "FilePathHelper.h"
 #include <QFileInfo>
-#include <QObject>
-#include <QFileSystemWatcher>
-#include <QStringList>
 #include <QTextStream>
-#include <QDateTime>
 #include <QDebug>
 #include <QDir>
 
@@ -18,21 +15,9 @@ static FileState makeFileState(const QString& path)
     return state;
 }
 
-static QString normalizePath(const QFileInfo& file)
-{
-    const QString canonicalPath = file.canonicalFilePath();
-    const QString rawPath = canonicalPath.isEmpty() ? file.absoluteFilePath() : canonicalPath;
-    return QDir::cleanPath(QDir::fromNativeSeparators(rawPath));
-}
-
-static QString normalizePath(const QString& path)
-{
-    return normalizePath(QFileInfo(path));
-}
-
 QString Monitoring::getFileInfo(const QString& path)
 {
-    QFileInfo file(normalizePath(path));
+    QFileInfo file(FilePathHelper::normalizedFileInfo(path));
     QString result;
     QTextStream out(&result);
 
@@ -60,10 +45,11 @@ Monitoring::Monitoring(QObject* parent)
 
 void Monitoring::addFile(const QString& path)
 {
-    const QString normalizedInput = normalizePath(path);
+    const QString normalizedInput = FilePathHelper::normalizePath(path);
     QFileInfo file(normalizedInput);
 
     if (!file.exists()) {
+        qWarning() << "Попытка добавить несуществующий путь:" << path;
         return;
     }
 
@@ -78,14 +64,14 @@ void Monitoring::addFile(const QString& path)
         return;
     }
 
-    const QString filePath = normalizePath(file);
+    const QString filePath = FilePathHelper::normalizePath(file);
 
     if (!monitoredFiles.contains(filePath)) {
         if (!watcher.addPath(filePath)) {
             qWarning() << "Не удалось добавить путь в watcher:" << filePath;
             return;
         }
-        monitoredFiles.append(filePath);
+        monitoredFiles.insert(filePath);
         fileStates[filePath] = makeFileState(filePath);
         emit fileAdded(filePath);
     }
@@ -93,39 +79,42 @@ void Monitoring::addFile(const QString& path)
 
 void Monitoring::removeFile(const QString& path)
 {
-    const QString normalizedInput = normalizePath(path);
+    const QString normalizedInput = FilePathHelper::normalizePath(path);
     QFileInfo file(normalizedInput);
 
     if (file.exists() && file.isDir()) {
-        const QString dirBase = normalizePath(file);
+        const QString dirBase = FilePathHelper::normalizePath(file);
         QString dirPath = dirBase;
 
         if (!dirPath.endsWith('/')) {
             dirPath += '/';
         }
 
-        const QStringList files = monitoredFiles;
-        for (const QString& filePath : files) {
-            const QString absFilePath = QDir::cleanPath(QDir::fromNativeSeparators(QFileInfo(filePath).absoluteFilePath()));
-            if (absFilePath == dirBase || absFilePath.startsWith(dirPath)) {
-                monitoredFiles.removeAll(filePath);
-                watcher.removePath(filePath);
-                fileStates.remove(filePath);
+        QSet<QString> toRemove;
+        for (const QString& filePath : qAsConst(monitoredFiles)) {
+            if (filePath == dirBase || filePath.startsWith(dirPath)) {
+                toRemove.insert(filePath);
             }
+        }
+
+        for (const QString& filePath : qAsConst(toRemove)) {
+            monitoredFiles.remove(filePath);
+            watcher.removePath(filePath);
+            fileStates.remove(filePath);
         }
 
         return;
     }
 
-    const QString filePath = file.exists() ? normalizePath(file) : normalizedInput;
-    monitoredFiles.removeAll(filePath);
+    const QString filePath = file.exists() ? FilePathHelper::normalizePath(file) : normalizedInput;
+    monitoredFiles.remove(filePath);
     watcher.removePath(filePath);
     fileStates.remove(filePath);
 }
 
 void Monitoring::onFileChanged(const QString& path)
 {
-    const QString normalized = normalizePath(path);
+    const QString normalized = FilePathHelper::normalizePath(path);
     QFileInfo info(normalized);
 
     if (info.exists()) {
@@ -135,7 +124,7 @@ void Monitoring::onFileChanged(const QString& path)
             qWarning() << "Не удалось повторно добавить путь в watcher:" << normalized;
         }
     } else {
-        monitoredFiles.removeAll(normalized);
+        monitoredFiles.remove(normalized);
         fileStates.remove(normalized);
         emit fileDeleted(normalized);
     }
@@ -150,7 +139,7 @@ void Monitoring::onTimerTick()
 
         if (!info.exists()) {
             emit fileDeleted(path);
-            monitoredFiles.removeAll(path);
+            monitoredFiles.remove(path);
             it = fileStates.erase(it);
             continue;
         }

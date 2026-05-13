@@ -26,10 +26,13 @@ add_executable(${PROJECT_NAME}
     file_monitoring.cpp
     monitoring.cpp
     monitoring.h
-    logger.cpp
-    logger.h
     FilePathHelper.cpp
     FilePathHelper.h
+    ILogger.h
+    ConsoleLogger.cpp
+    ConsoleLogger.h
+    FileLogger.cpp
+    FileLogger.h
  )
 
 target_link_libraries(${PROJECT_NAME}

@@ -1,4 +1,5 @@
 #include "monitoring.h"
+#include "ILogger.h"
 #include "directorywalker.h"
 #include "FilePathHelper.h"
 #include <QFileInfo>
@@ -34,9 +35,10 @@ QString Monitoring::getFileInfo(const QString& path)
     return result;
 }
 
-Monitoring::Monitoring(QObject* parent)
+Monitoring::Monitoring(ILogger* logger, QObject* parent)
     : QObject(parent)
     , timer(new QTimer(this))
+    , logger(logger)
 {
     connect(&watcher, &QFileSystemWatcher::fileChanged, this, &Monitoring::onFileChanged);
     connect(timer, &QTimer::timeout, this, &Monitoring::onTimerTick);
@@ -74,6 +76,9 @@ void Monitoring::addFile(const QString& path)
         monitoredFiles.insert(filePath);
         fileStates[filePath] = makeFileState(filePath);
         emit fileAdded(filePath);
+        if (logger) {
+            logger->logAdded(filePath);
+        }
     }
 }
 
@@ -101,15 +106,23 @@ void Monitoring::removeFile(const QString& path)
             monitoredFiles.remove(filePath);
             watcher.removePath(filePath);
             fileStates.remove(filePath);
+            if (logger) {
+                logger->logRemoved(filePath);
+            }
         }
 
         return;
     }
 
     const QString filePath = file.exists() ? FilePathHelper::normalizePath(file) : normalizedInput;
-    monitoredFiles.remove(filePath);
-    watcher.removePath(filePath);
-    fileStates.remove(filePath);
+    if (monitoredFiles.contains(filePath)) {
+        monitoredFiles.remove(filePath);
+        watcher.removePath(filePath);
+        fileStates.remove(filePath);
+        if (logger) {
+            logger->logRemoved(filePath);
+        }
+    }
 }
 
 void Monitoring::onFileChanged(const QString& path)
@@ -120,6 +133,9 @@ void Monitoring::onFileChanged(const QString& path)
     if (info.exists()) {
         fileStates[normalized] = makeFileState(normalized);
         emit fileModified(normalized);
+        if (logger) {
+            logger->logModified(normalized);
+        }
         if (!watcher.files().contains(normalized) && !watcher.addPath(normalized)) {
             qWarning() << "Не удалось повторно добавить путь в watcher:" << normalized;
         }
@@ -127,6 +143,9 @@ void Monitoring::onFileChanged(const QString& path)
         monitoredFiles.remove(normalized);
         fileStates.remove(normalized);
         emit fileDeleted(normalized);
+        if (logger) {
+            logger->logDeleted(normalized);
+        }
     }
 }
 
@@ -139,6 +158,9 @@ void Monitoring::onTimerTick()
 
         if (!info.exists()) {
             emit fileDeleted(path);
+            if (logger) {
+                logger->logDeleted(path);
+            }
             monitoredFiles.remove(path);
             it = fileStates.erase(it);
             continue;
@@ -146,6 +168,9 @@ void Monitoring::onTimerTick()
 
         if (info.lastModified() != it->lastModified || info.size() != it->size) {
             emit fileModified(path);
+            if (logger) {
+                logger->logModified(path);
+            }
             it.value() = makeFileState(path);
         }
 

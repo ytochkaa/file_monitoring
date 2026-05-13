@@ -8,6 +8,8 @@
 #include <QDateTime>
 #include <QTimer>
 
+class ILogger;
+
 struct FileState
 {
     QDateTime lastModified;
@@ -20,7 +22,7 @@ class Monitoring : public QObject
 
 public:
     QString getFileInfo(const QString& path);
-    explicit Monitoring(QObject* parent = nullptr);
+    explicit Monitoring(ILogger* logger = nullptr, QObject* parent = nullptr);
 
 public slots:
     void addFile(const QString& path);
@@ -40,6 +42,7 @@ private:
     QSet<QString> monitoredFiles;
     QHash<QString, FileState> fileStates;
     QTimer* timer;
+    ILogger* logger;
 };
 
 #endif

@@ -2,7 +2,7 @@
 #include <QDebug>
 
 #include "command_input.h"
-#include "logger.h"
+#include "ConsoleLogger.h"
 #include "monitoring.h"
 
 int main(int argc, char* argv[])
@@ -11,23 +11,15 @@ int main(int argc, char* argv[])
 
     QCoreApplication a(argc, argv);
 
-    Monitoring monitor;
+    ConsoleLogger logger;
+    Monitoring monitor(&logger);
     CommandReader reader;
-    Logger logger;
 
     qDebug() << "Мониторинг запущен";
 
     QObject::connect(&reader, &CommandReader::addRequested, &monitor, &Monitoring::addFile);
     QObject::connect(&reader, &CommandReader::removeRequested, &monitor, &Monitoring::removeFile);
     QObject::connect(&reader, &CommandReader::exitRequested, &a, &QCoreApplication::quit);
-
-    QObject::connect(&monitor, &Monitoring::fileModified, [&](const QString& path) {
-        logger.logModified(path);
-    });
-
-    QObject::connect(&monitor, &Monitoring::fileDeleted, [&](const QString& path) {
-        logger.logDeleted(path);
-    });
 
     reader.start();
 

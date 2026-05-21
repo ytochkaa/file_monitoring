@@ -18,3 +18,17 @@ void Logger::logDeleted(const QString& path)
 {
     qDebug() << "УДАЛЁН:" << path;
 }
+
+void fileWasModified(const QString& path)
+{
+    qDebug() << "Файл изменён:" << path;
+    Logger logger;
+    logger.logModified(path);
+}
+
+void fileWasDeleted(const QString& path)
+{
+    qDebug() << "Файл удалён:" << path;
+    Logger logger;
+    logger.logDeleted(path);
+}

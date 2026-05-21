@@ -19,6 +19,10 @@ public:
 signals:
     void addRequested(const QString& path);
     void removeRequested(const QString& path);
+    void listRequested();
+    void statusRequested(const QString& path);
+    void clearRequested();
+    void helpRequested();
     void exitRequested();
 
 protected:
@@ -27,40 +31,64 @@ protected:
         QTextStream in(stdin);
 
         while (true) {
-            qDebug() << "Введите команду (добавить <путь>, удалить <путь>, выход):";
+            qDebug() << "\nВведите команду:";
+            qDebug() << "  add <path>      - добавить файл или папку в мониторинг";
+            qDebug() << "  remove <path>   - удалить файл или папку из мониторинга";
+            qDebug() << "  list            - показать все отслеживаемые файлы";
+            qDebug() << "  status <path>   - показать информацию о файле";
+            qDebug() << "  clear           - удалить все файлы из мониторинга";
+            qDebug() << "  help            - показать справку по командам";
+            qDebug() << "  exit            - выйти из программы\n";
             QString line = in.readLine().trimmed();
 
             if (line.isEmpty()) {
-                qDebug() << "Пусто! Введите команду.";
+                qDebug() << "Empty input, please enter a command.";
                 continue;
-            }
-
-            QString lowerLine = line.toLower();
-
-            if (lowerLine == "exit" || lowerLine == "выход") {
-                qDebug() << "Выход из программы...";
-                emit exitRequested();
-                break;
             }
 
             QStringList parts = line.split(' ', Qt::SkipEmptyParts);
 
-            if (parts.size() < 2) {
-                qDebug() << "Ошибка: добавить <путь> или удалить <путь>";
+            if (parts.isEmpty()) {
                 continue;
             }
 
             QString command = parts[0].toLower();
-            QString filePath = line.section(' ', 1);
 
-            if (command == "add" || command == "добавить") {
+            if (command == "add") {
+                if (parts.size() < 2) {
+                    qDebug() << "Error: specify a path. Example: add C:/files/test.txt";
+                    continue;
+                }
+                QString filePath = line.section(' ', 1);
                 emit addRequested(filePath);
-                qDebug() << "Запрос на добавление файла:" << filePath;
-            } else if (command == "del" || command == "удалить") {
+                qDebug() << "Add request:" << filePath;
+            } else if (command == "remove") {
+                if (parts.size() < 2) {
+                    qDebug() << "Error: specify a path. Example: remove C:/files/test.txt";
+                    continue;
+                }
+                QString filePath = line.section(' ', 1);
                 emit removeRequested(filePath);
-                qDebug() << "Запрос на удаление файла:" << filePath;
+                qDebug() << "Remove request:" << filePath;
+            } else if (command == "list") {
+                emit listRequested();
+            } else if (command == "status") {
+                if (parts.size() < 2) {
+                    qDebug() << "Error: specify a path. Example: status C:/files/test.txt";
+                    continue;
+                }
+                QString filePath = line.section(' ', 1);
+                emit statusRequested(filePath);
+            } else if (command == "clear") {
+                emit clearRequested();
+            } else if (command == "help") {
+                emit helpRequested();
+            } else if (command == "exit") {
+                qDebug() << "Exiting application...";
+                emit exitRequested();
+                break;
             } else {
-                qDebug() << "Неизвестная команда:" << command;
+                qDebug() << "Unknown command:" << command << ". Type 'help' for available commands.";
             }
         }
     }

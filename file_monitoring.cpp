@@ -1,43 +1,55 @@
 #include <QCoreApplication>
 #include <QDebug>
+#include <QThread>
 
 #include "command_input.h"
 #include "logger.h"
 #include "monitoring.h"
 
+bool isRunning = true;
+
+void stopMonitoring()
+{
+    isRunning = false;
+}
+
 int main(int argc, char* argv[])
 {
-    qDebug() << "Запуск программы";
-
     QCoreApplication a(argc, argv);
 
-    Monitoring monitor;
-    CommandReader reader;
+    while (true) {
+        qDebug() << "Запуск программы";
 
-    qDebug() << "Мониторинг запущен";
+        Monitoring monitor;
+        CommandReader reader;
 
-    QObject::connect(&reader, &CommandReader::addRequested, &monitor, &Monitoring::addFile);
+        qDebug() << "Мониторинг запущен";
 
-    QObject::connect(&reader, &CommandReader::removeRequested, &monitor, &Monitoring::removeFile);
+        QObject::connect(&reader, &CommandReader::addRequested, &monitor, &Monitoring::addFile);
 
-    QObject::connect(&reader, &CommandReader::exitRequested, &a, &QCoreApplication::quit);
+        QObject::connect(&reader, &CommandReader::removeRequested, &monitor, &Monitoring::removeFile);
 
-    QObject::connect(&monitor, &Monitoring::fileModified, [&](const QString& path) {
-        qDebug() << "Файл изменён:" << path;
-        Logger logger;
-        logger.logModified(path);
-    });
+        QObject::connect(&reader, &CommandReader::exitRequested, stopMonitoring);
 
-    QObject::connect(&monitor, &Monitoring::fileDeleted, [&](const QString& path) {
-        qDebug() << "Файл удалён:" << path;
-        Logger logger;
-        logger.logDeleted(path);
-    });
+        QObject::connect(&monitor, &Monitoring::fileModified, fileWasModified);
 
-    reader.start();
+        QObject::connect(&monitor, &Monitoring::fileDeleted, fileWasDeleted);
 
-    int result = a.exec();
-    reader.wait();
+        reader.start();
 
-    return result;
+        while (true) {
+            a.processEvents();
+
+            if (!isRunning) {
+                break;
+            }
+
+            QThread::msleep(100);
+        }
+
+        reader.wait();
+        break;
+    }
+
+    return 0;
 }

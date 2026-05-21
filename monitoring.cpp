@@ -177,3 +177,64 @@ void Monitoring::onTimerTick()
         ++it;
     }
 }
+
+void Monitoring::listFiles()
+{
+    qDebug() << "\nСписок отслеживаемых файлов:";
+
+    if (monitoredFiles.isEmpty()) {
+        qDebug() << "No monitored files";
+    } else {
+        int index = 1;
+        for (const QString& filePath : qAsConst(monitoredFiles)) {
+            QFileInfo file(filePath);
+            qDebug() << QString("%1. %2 (size: %3 bytes)")
+                            .arg(index++)
+                            .arg(filePath)
+                            .arg(file.exists() ? file.size() : 0);
+        }
+    }
+    qDebug() << "Total files:" << monitoredFiles.size() << "\n";
+}
+
+void Monitoring::showStatus(const QString& path)
+{
+    const QString normalizedPath = FilePathHelper::normalizePath(path);
+    QFileInfo file(normalizedPath);
+    qDebug() << "\nFile information:";
+    qDebug() << "Path:" << normalizedPath;
+
+    if (!file.exists()) {
+        qDebug() << "File does not exist";
+    } else {
+        qDebug() << "File exists";
+        qDebug() << "Size:" << file.size() << "bytes";
+        qDebug() << "Last modified:" << file.lastModified().toString(Qt::ISODate);
+        qDebug() << "Location:" << file.absolutePath();
+        qDebug() << "Monitored:" << (monitoredFiles.contains(normalizedPath) ? "Yes" : "No");
+    }
+    qDebug() << "";
+}
+
+void Monitoring::clearAll()
+{
+    int count = monitoredFiles.size();
+    for (const QString& file : monitoredFiles) {
+        watcher.removePath(file);
+    }
+    monitoredFiles.clear();
+    fileStates.clear();
+    qDebug() << "\nУдалено" << count << "файлов из мониторинга\n";
+}
+
+void Monitoring::showHelp()
+{
+    qDebug() << "\nСправка по командам мониторинга:";
+    qDebug() << "  add <path>      - добавить файл или папку в мониторинг";
+    qDebug() << "  remove <path>   - удалить файл или папку из мониторинга";
+    qDebug() << "  list            - показать все отслеживаемые файлы";
+    qDebug() << "  status <path>   - показать информацию о файле";
+    qDebug() << "  clear           - удалить все файлы из мониторинга";
+    qDebug() << "  help            - показать справку по командам";
+    qDebug() << "  exit            - выйти из программы\n";
+}

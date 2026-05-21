@@ -27,6 +27,10 @@ public:
 public slots:
     void addFile(const QString& path);
     void removeFile(const QString& path);
+    void listFiles();
+    void showStatus(const QString& path);
+    void clearAll();
+    void showHelp();
 
 signals:
     void fileAdded(const QString& path);

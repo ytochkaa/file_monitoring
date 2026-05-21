@@ -1,6 +1,4 @@
 #include "logger.h"
-#include <QFile>
-#include <QTextStream>
 #include <QDateTime>
 #include <QDebug>
 
@@ -8,15 +6,16 @@ Logger::Logger()
 {
 }
 
-// добавить время когда был изменён и info(размер и т.д.)
 void Logger::logModified(const QString& path)
 {
-    qDebug() << "ИЗМЕНЁН:" << path;
+    qDebug().noquote() << QDateTime::currentDateTime().toString(Qt::ISODate)
+                       << "[MODIFIED]" << path;
 }
 
 void Logger::logDeleted(const QString& path)
 {
-    qDebug() << "УДАЛЁН:" << path;
+    qDebug().noquote() << QDateTime::currentDateTime().toString(Qt::ISODate)
+                       << "[DELETED]" << path;
 }
 
 void fileWasModified(const QString& path)

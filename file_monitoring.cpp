@@ -1,55 +1,34 @@
 #include <QCoreApplication>
 #include <QDebug>
-#include <QThread>
 
 #include "command_input.h"
-#include "logger.h"
+#include "ConsoleLogger.h"
 #include "monitoring.h"
-
-bool isRunning = true;
-
-void stopMonitoring()
-{
-    isRunning = false;
-}
 
 int main(int argc, char* argv[])
 {
     QCoreApplication a(argc, argv);
 
-    while (true) {
-        qDebug() << "Запуск программы";
+    qDebug() << "Запуск программы";
 
-        Monitoring monitor;
-        CommandReader reader;
+    ConsoleLogger logger;
+    Monitoring monitor(&logger);
+    CommandReader reader;
 
-        qDebug() << "Мониторинг запущен";
+    qDebug() << "Мониторинг запущен";
 
-        QObject::connect(&reader, &CommandReader::addRequested, &monitor, &Monitoring::addFile);
+    QObject::connect(&reader, &CommandReader::addRequested, &monitor, &Monitoring::addFile);
+    QObject::connect(&reader, &CommandReader::removeRequested, &monitor, &Monitoring::removeFile);
+    QObject::connect(&reader, &CommandReader::listRequested, &monitor, &Monitoring::listFiles);
+    QObject::connect(&reader, &CommandReader::statusRequested, &monitor, &Monitoring::showStatus);
+    QObject::connect(&reader, &CommandReader::clearRequested, &monitor, &Monitoring::clearAll);
+    QObject::connect(&reader, &CommandReader::helpRequested, &monitor, &Monitoring::showHelp);
+    QObject::connect(&reader, &CommandReader::exitRequested, &a, &QCoreApplication::quit);
 
-        QObject::connect(&reader, &CommandReader::removeRequested, &monitor, &Monitoring::removeFile);
+    reader.start();
 
-        QObject::connect(&reader, &CommandReader::exitRequested, stopMonitoring);
+    int result = a.exec();
+    reader.wait();
 
-        QObject::connect(&monitor, &Monitoring::fileModified, fileWasModified);
-
-        QObject::connect(&monitor, &Monitoring::fileDeleted, fileWasDeleted);
-
-        reader.start();
-
-        while (true) {
-            a.processEvents();
-
-            if (!isRunning) {
-                break;
-            }
-
-            QThread::msleep(100);
-        }
-
-        reader.wait();
-        break;
-    }
-
-    return 0;
+    return result;
 }

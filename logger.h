@@ -1,3 +1,6 @@
+#ifndef LOGGER_H
+#define LOGGER_H
+
 #include <QString>
 
 class Logger
@@ -11,3 +14,5 @@ public:
 
 void fileWasModified(const QString& path);
 void fileWasDeleted(const QString& path);
+
+#endif

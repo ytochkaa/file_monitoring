@@ -21,11 +21,18 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 
 add_executable(${PROJECT_NAME}
     command_input.h
+    directorywalker.cpp
+    directorywalker.h
     file_monitoring.cpp
     monitoring.cpp
     monitoring.h
-    logger.cpp
-    logger.h
+    FilePathHelper.cpp
+    FilePathHelper.h
+    ILogger.h
+    ConsoleLogger.cpp
+    ConsoleLogger.h
+    FileLogger.cpp
+    FileLogger.h
  )
 
 target_link_libraries(${PROJECT_NAME}

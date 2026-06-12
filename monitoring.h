@@ -21,7 +21,6 @@ class Monitoring : public QObject
     Q_OBJECT
 
 public:
-    QString getFileInfo(const QString& path);
     explicit Monitoring(ILogger* logger = nullptr, QObject* parent = nullptr);
 
 public slots:

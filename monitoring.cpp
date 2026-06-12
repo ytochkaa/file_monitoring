@@ -3,7 +3,6 @@
 #include "directorywalker.h"
 #include "FilePathHelper.h"
 #include <QFileInfo>
-#include <QTextStream>
 #include <QDebug>
 #include <QDir>
 
@@ -16,25 +15,6 @@ static FileState makeFileState(const QString& path)
     return state;
 }
 
-QString Monitoring::getFileInfo(const QString& path)
-{
-    QFileInfo file(FilePathHelper::normalizedFileInfo(path));
-    QString result;
-    QTextStream out(&result);
-
-    if (!file.exists()) {
-        out << "Не существует: " << path;
-        return result;
-    }
-
-    out << "Расположение: " << file.absolutePath() << '\n';
-    out << "Существует: " << (file.exists() ? "да" : "нет") << '\n';
-    out << "Изменён: " << file.lastModified().toString(Qt::ISODate) << '\n';
-    out << "Размер: " << file.size() << " байт\n";
-
-    return result;
-}
-
 Monitoring::Monitoring(ILogger* logger, QObject* parent)
     : QObject(parent)
     , timer(new QTimer(this))
@@ -42,7 +22,7 @@ Monitoring::Monitoring(ILogger* logger, QObject* parent)
 {
     connect(&watcher, &QFileSystemWatcher::fileChanged, this, &Monitoring::onFileChanged);
     connect(timer, &QTimer::timeout, this, &Monitoring::onTimerTick);
-    timer->start(500);
+    timer->start(100);
 }
 
 void Monitoring::addFile(const QString& path)
@@ -57,7 +37,7 @@ void Monitoring::addFile(const QString& path)
 
     if (file.isDir()) {
         DirectoryWalker walker;
-        const QStringList files = walker.listFilesRecursively(normalizedInput);
+        const QVector<QString> files = walker.listFilesRecursively(normalizedInput);
 
         for (const QString& filePath : files) {
             addFile(filePath);
@@ -77,7 +57,7 @@ void Monitoring::addFile(const QString& path)
         fileStates[filePath] = makeFileState(filePath);
         emit fileAdded(filePath);
         if (logger) {
-            logger->logAdded(filePath);
+            logger->logAdded(filePath, fileStates[filePath].size);
         }
     }
 }
@@ -134,7 +114,7 @@ void Monitoring::onFileChanged(const QString& path)
         fileStates[normalized] = makeFileState(normalized);
         emit fileModified(normalized);
         if (logger) {
-            logger->logModified(normalized);
+            logger->logModified(normalized, fileStates[normalized].size);
         }
         if (!watcher.files().contains(normalized) && !watcher.addPath(normalized)) {
             qWarning() << "Не удалось повторно добавить путь в watcher:" << normalized;
@@ -167,11 +147,11 @@ void Monitoring::onTimerTick()
         }
 
         if (info.lastModified() != it->lastModified || info.size() != it->size) {
+            it.value() = makeFileState(path);
             emit fileModified(path);
             if (logger) {
-                logger->logModified(path);
+                logger->logModified(path, it->size);
             }
-            it.value() = makeFileState(path);
         }
 
         ++it;

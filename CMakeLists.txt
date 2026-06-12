@@ -31,8 +31,6 @@ add_executable(${PROJECT_NAME}
     ILogger.h
     ConsoleLogger.cpp
     ConsoleLogger.h
-    FileLogger.cpp
-    FileLogger.h
  )
 
 target_link_libraries(${PROJECT_NAME}

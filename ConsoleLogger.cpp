@@ -1,11 +1,5 @@
 #include "ConsoleLogger.h"
 #include <QDebug>
-#include <QDateTime>
-
-static QString makeTimestamp()
-{
-    return QDateTime::currentDateTime().toString(Qt::ISODate);
-}
 
 void ConsoleLogger::logAdded(const QString& path)
 {

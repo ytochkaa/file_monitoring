@@ -2,6 +2,12 @@
 #define ILOGGER_H
 
 #include <QString>
+#include <QDateTime>
+
+inline QString makeTimestamp()
+{
+    return QDateTime::currentDateTime().toString(Qt::ISODate);
+}
 
 class ILogger
 {

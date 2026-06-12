@@ -42,7 +42,7 @@ Monitoring::Monitoring(ILogger* logger, QObject* parent)
 {
     connect(&watcher, &QFileSystemWatcher::fileChanged, this, &Monitoring::onFileChanged);
     connect(timer, &QTimer::timeout, this, &Monitoring::onTimerTick);
-    timer->start(500);
+    timer->start(100);
 }
 
 void Monitoring::addFile(const QString& path)
@@ -57,7 +57,7 @@ void Monitoring::addFile(const QString& path)
 
     if (file.isDir()) {
         DirectoryWalker walker;
-        const QStringList files = walker.listFilesRecursively(normalizedInput);
+        const QVector<QString> files = walker.listFilesRecursively(normalizedInput);
 
         for (const QString& filePath : files) {
             addFile(filePath);

@@ -8,11 +8,11 @@ void DirectoryWalker::listDirsRecursively(const QString& path, QTextStream& out)
     QDir dir(path);
 
     if (!dir.exists()) {
-        out << "The path does not exist:" << path << Qt::endl;
+        out << "Путь не существует: " << path << Qt::endl;
         return;
     }
 
-    out << "Directory:" << dir.absolutePath() << Qt::endl;
+    out << "Директория: " << dir.absolutePath() << Qt::endl;
 
     dir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
     for (const QString& subDir : dir.entryList()) {
@@ -20,10 +20,10 @@ void DirectoryWalker::listDirsRecursively(const QString& path, QTextStream& out)
     }
 }
 
-QStringList DirectoryWalker::listFilesRecursively(const QString& path)
+QVector<QString> DirectoryWalker::listFilesRecursively(const QString& path)
 {
     QDir dir(path);
-    QStringList files;
+    QVector<QString> files;
 
     if (!dir.exists()) {
         return files;

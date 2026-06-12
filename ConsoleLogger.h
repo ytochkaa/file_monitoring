@@ -6,9 +6,9 @@
 class ConsoleLogger : public ILogger
 {
 public:
-    void logAdded(const QString& path) override;
+    void logAdded(const QString& path, qint64 size) override;
     void logRemoved(const QString& path) override;
-    void logModified(const QString& path) override;
+    void logModified(const QString& path, qint64 size) override;
     void logDeleted(const QString& path) override;
 };
 

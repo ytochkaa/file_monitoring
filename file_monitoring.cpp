@@ -1,5 +1,4 @@
 #include <QCoreApplication>
-#include <QDebug>
 #include <locale>
 
 #include "command_input.h"
@@ -9,15 +8,12 @@
 int main(int argc, char* argv[])
 {
     setlocale(LC_ALL, "");
-    qDebug() << "Запуск программы";
 
     QCoreApplication a(argc, argv);
 
     ConsoleLogger logger;
     Monitoring monitor(&logger);
     CommandReader reader;
-
-    qDebug() << "Мониторинг запущен";
 
     QObject::connect(&reader, &CommandReader::addRequested, &monitor, &Monitoring::addFile);
     QObject::connect(&reader, &CommandReader::removeRequested, &monitor, &Monitoring::removeFile);

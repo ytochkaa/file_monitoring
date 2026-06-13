@@ -1,7 +1,6 @@
 #ifndef COMMAND_INPUT_H
 #define COMMAND_INPUT_H
 
-#include <QDebug>
 #include <QTextStream>
 #include <QThread>
 #include <QStringList>
@@ -25,42 +24,39 @@ protected:
     void run() override
     {
         QTextStream in(stdin);
+        QTextStream out(stdout);
 
         while (true) {
-            qDebug() << "Введите команду (добавить <путь>, удалить <путь>, выход):";
+            out << "Введите команду (add <путь>, remove <путь>, exit): " << Qt::flush;
             QString line = in.readLine().trimmed();
 
             if (line.isEmpty()) {
-                qDebug() << "Пусто! Введите команду.";
                 continue;
             }
 
-            QString lowerLine = line.toLower();
+            QStringList parts = line.split(' ', Qt::SkipEmptyParts);
+            QString command = parts[0].toLower();
 
-            if (lowerLine == "exit" || lowerLine == "выход") {
-                qDebug() << "Выход из программы...";
+            if (command == "exit") {
                 emit exitRequested();
                 break;
             }
 
-            QStringList parts = line.split(' ', Qt::SkipEmptyParts);
-
-            if (parts.size() < 2) {
-                qDebug() << "Ошибка: добавить <путь> или удалить <путь>";
-                continue;
-            }
-
-            QString command = parts[0].toLower();
-            QString filePath = line.section(' ', 1);
-
-            if (command == "add" || command == "добавить") {
-                emit addRequested(filePath);
-                qDebug() << "Запрос на добавление файла:" << filePath;
-            } else if (command == "del" || command == "удалить") {
-                emit removeRequested(filePath);
-                qDebug() << "Запрос на удаление файла:" << filePath;
+            if (command == "add" || command == "remove") {
+                if (parts.size() < 2) {
+                    out << "Ошибка: укажите путь. Пример: add C:/files/test.txt\n"
+                        << Qt::flush;
+                    continue;
+                }
+                QString filePath = line.section(' ', 1);
+                if (command == "add") {
+                    emit addRequested(filePath);
+                } else {
+                    emit removeRequested(filePath);
+                }
             } else {
-                qDebug() << "Неизвестная команда:" << command;
+                out << "Неизвестная команда: " << command << "\n"
+                    << Qt::flush;
             }
         }
     }

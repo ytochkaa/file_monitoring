@@ -21,13 +21,14 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 
 add_executable(${PROJECT_NAME}
     command_input.h
+    command_input.cpp
+    pollingtimer.h
+    pollingtimer.cpp
     directorywalker.cpp
     directorywalker.h
-    file_monitoring.cpp
+    main.cpp
     monitoring.cpp
     monitoring.h
-    FilePathHelper.cpp
-    FilePathHelper.h
     ILogger.h
     ConsoleLogger.cpp
     ConsoleLogger.h

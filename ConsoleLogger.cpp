@@ -1,11 +1,21 @@
 #include "ConsoleLogger.h"
 #include <QDebug>
+#include <QDateTime>
 
-void ConsoleLogger::logAdded(const QString& path, qint64 size)
+static QString makeTimestamp()
 {
-    qDebug().noquote() << makeTimestamp() << "[ADDED]" << path;
-    qDebug().noquote() << "  Существует: да";
+    return QDateTime::currentDateTime().toString(Qt::ISODate);
+}
+
+void ConsoleLogger::logFileEvent(const QString& tag, const QString& path, long int size)
+{
+    qDebug().noquote() << makeTimestamp() << tag << path;
     qDebug().noquote() << "  Размер:" << size << "байт";
+}
+
+void ConsoleLogger::logAdded(const QString& path, long int size)
+{
+    logFileEvent("[ADDED]", path, size);
 }
 
 void ConsoleLogger::logRemoved(const QString& path)
@@ -13,14 +23,17 @@ void ConsoleLogger::logRemoved(const QString& path)
     qDebug().noquote() << makeTimestamp() << "[REMOVED]" << path;
 }
 
-void ConsoleLogger::logModified(const QString& path, qint64 size)
+void ConsoleLogger::logModified(const QString& path, long int size)
 {
-    qDebug().noquote() << makeTimestamp() << "[MODIFIED]" << path;
-    qDebug().noquote() << "  Существует: да";
-    qDebug().noquote() << "  Размер:" << size << "байт";
+    logFileEvent("[MODIFIED]", path, size);
 }
 
 void ConsoleLogger::logDeleted(const QString& path)
 {
     qDebug().noquote() << makeTimestamp() << "[DELETED]" << path;
+}
+
+void ConsoleLogger::logError(const QString& message)
+{
+    qDebug().noquote() << makeTimestamp() << "[ERROR]" << message;
 }

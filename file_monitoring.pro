@@ -7,16 +7,17 @@ CONFIG -= app_bundle
 TARGET = file_monitoring
 
 SOURCES += \
-    file_monitoring.cpp \
+    main.cpp \
     monitoring.cpp \
     ConsoleLogger.cpp \
-    FilePathHelper.cpp \
-    directorywalker.cpp
+    directorywalker.cpp \
+    command_input.cpp \
+    pollingtimer.cpp
 
 HEADERS += \
     command_input.h \
     monitoring.h \
     ILogger.h \
     ConsoleLogger.h \
-    FilePathHelper.h \
-    directorywalker.h
+    directorywalker.h \
+    pollingtimer.h

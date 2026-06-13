@@ -16,20 +16,56 @@ struct FileState
     long int size;
 };
 
+/**
+ * @brief Класс для отслеживания изменений файлов.
+ *
+ * Использует QFileSystemWatcher и таймер опроса (100 мс) для обнаружения
+ * изменений существования и размера наблюдаемых файлов.
+ */
 class Monitoring : public QObject
 {
     Q_OBJECT
 
 public:
+    /**
+     * @brief Конструктор.
+     * @param logger логгер для вывода событий. Если nullptr — вывод отключён.
+     * @param parent родительский объект Qt.
+     */
     explicit Monitoring(ILogger* logger = nullptr, QObject* parent = nullptr);
 
 public slots:
+    /**
+     * @brief Добавляет файл или директорию в мониторинг.
+     *
+     * Если путь указывает на директорию — добавляются все файлы рекурсивно.
+     * @param path путь к файлу или директории.
+     */
     void addFile(const QString& path);
+
+    /**
+     * @brief Удаляет файл или директорию из мониторинга.
+     * @param path путь к файлу или директории.
+     */
     void removeFile(const QString& path);
 
 signals:
+    /**
+     * @brief Сигнал: файл добавлен в мониторинг.
+     * @param path путь к файлу.
+     */
     void fileAdded(const QString& path);
+
+    /**
+     * @brief Сигнал: наблюдаемый файл был изменён.
+     * @param path путь к файлу.
+     */
     void fileModified(const QString& path);
+
+    /**
+     * @brief Сигнал: наблюдаемый файл был удалён с диска.
+     * @param path путь к файлу.
+     */
     void fileDeleted(const QString& path);
 
 private slots:

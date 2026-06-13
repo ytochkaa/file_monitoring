@@ -5,19 +5,16 @@
 #include <QDebug>
 #include <QDir>
 
-static QString normalizePath(const QString& path)
-{
-    QFileInfo file(path);
-    const QString canonical = file.canonicalFilePath();
-    const QString raw = canonical.isEmpty() ? file.absoluteFilePath() : canonical;
-    return QDir::cleanPath(QDir::fromNativeSeparators(raw));
-}
-
 static QString normalizePath(const QFileInfo& file)
 {
     const QString canonical = file.canonicalFilePath();
     const QString raw = canonical.isEmpty() ? file.absoluteFilePath() : canonical;
     return QDir::cleanPath(QDir::fromNativeSeparators(raw));
+}
+
+static QString normalizePath(const QString& path)
+{
+    return normalizePath(QFileInfo(path));
 }
 
 static FileState makeFileState(const QString& path)
@@ -45,7 +42,7 @@ void Monitoring::addFile(const QString& path)
     QFileInfo file(normalizedInput);
 
     if (!file.exists()) {
-        qWarning() << "Попытка добавить несуществующий путь:" << path;
+        qWarning() << "Нельзя добавить несуществующий путь:" << path;
         return;
     }
 
@@ -151,12 +148,13 @@ void Monitoring::onTimerTick()
         QFileInfo info(path);
 
         if (!info.exists()) {
+            watcher.removePath(path);
+            monitoredFiles.remove(path);
+            it = fileStates.erase(it);
             emit fileDeleted(path);
             if (logger) {
                 logger->logDeleted(path);
             }
-            monitoredFiles.remove(path);
-            it = fileStates.erase(it);
             continue;
         }
 

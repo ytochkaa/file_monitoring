@@ -2,7 +2,6 @@
 #include "ILogger.h"
 #include "directorywalker.h"
 #include <QFileInfo>
-#include <QDebug>
 #include <QDir>
 
 static QString normalizePath(const QFileInfo& file)
@@ -42,7 +41,9 @@ void Monitoring::addFile(const QString& path)
     QFileInfo file(normalizedInput);
 
     if (!file.exists()) {
-        qWarning() << "Нельзя добавить несуществующий путь:" << path;
+        if (logger) {
+            logger->logError("Нельзя добавить несуществующий путь: " + path);
+        }
         return;
     }
 
@@ -61,7 +62,9 @@ void Monitoring::addFile(const QString& path)
 
     if (!monitoredFiles.contains(filePath)) {
         if (!watcher.addPath(filePath)) {
-            qWarning() << "Не удалось добавить путь в watcher:" << filePath;
+            if (logger) {
+                logger->logError("Не удалось добавить путь в watcher: " + filePath);
+            }
             return;
         }
         monitoredFiles.insert(filePath);
@@ -128,7 +131,9 @@ void Monitoring::onFileChanged(const QString& path)
             logger->logModified(normalized, fileStates[normalized].size);
         }
         if (!watcher.files().contains(normalized) && !watcher.addPath(normalized)) {
-            qWarning() << "Не удалось повторно добавить путь в watcher:" << normalized;
+            if (logger) {
+                logger->logError("Не удалось повторно добавить путь в watcher: " + normalized);
+            }
         }
     } else {
         monitoredFiles.remove(normalized);

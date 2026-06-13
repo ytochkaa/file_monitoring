@@ -23,7 +23,7 @@ add_executable(${PROJECT_NAME}
     command_input.h
     directorywalker.cpp
     directorywalker.h
-    file_monitoring.cpp
+    main.cpp
     monitoring.cpp
     monitoring.h
     ILogger.h

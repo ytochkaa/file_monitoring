@@ -1,7 +1,6 @@
 #ifndef COMMAND_INPUT_H
 #define COMMAND_INPUT_H
 
-#include <QDebug>
 #include <QTextStream>
 #include <QThread>
 #include <QStringList>
@@ -25,9 +24,10 @@ protected:
     void run() override
     {
         QTextStream in(stdin);
+        QTextStream out(stdout);
 
         while (true) {
-            qDebug() << "Введите команду (add <путь>, remove <путь>, exit):";
+            out << "Введите команду (add <путь>, remove <путь>, exit): " << Qt::flush;
             QString line = in.readLine().trimmed();
 
             if (line.isEmpty()) {
@@ -38,14 +38,14 @@ protected:
             QString command = parts[0].toLower();
 
             if (command == "exit") {
-                qDebug() << "Выход из программы...";
                 emit exitRequested();
                 break;
             }
 
             if (command == "add" || command == "remove") {
                 if (parts.size() < 2) {
-                    qDebug() << "Ошибка: укажите путь. Пример: add C:/files/test.txt";
+                    out << "Ошибка: укажите путь. Пример: add C:/files/test.txt\n"
+                        << Qt::flush;
                     continue;
                 }
                 QString filePath = line.section(' ', 1);
@@ -55,7 +55,8 @@ protected:
                     emit removeRequested(filePath);
                 }
             } else {
-                qDebug() << "Неизвестная команда:" << command;
+                out << "Неизвестная команда: " << command << "\n"
+                    << Qt::flush;
             }
         }
     }

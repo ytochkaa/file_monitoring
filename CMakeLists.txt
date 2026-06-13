@@ -26,8 +26,6 @@ add_executable(${PROJECT_NAME}
     file_monitoring.cpp
     monitoring.cpp
     monitoring.h
-    FilePathHelper.cpp
-    FilePathHelper.h
     ILogger.h
     ConsoleLogger.cpp
     ConsoleLogger.h

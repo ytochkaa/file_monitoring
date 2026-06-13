@@ -1,10 +1,24 @@
 #include "monitoring.h"
 #include "ILogger.h"
 #include "directorywalker.h"
-#include "FilePathHelper.h"
 #include <QFileInfo>
 #include <QDebug>
 #include <QDir>
+
+static QString normalizePath(const QString& path)
+{
+    QFileInfo file(path);
+    const QString canonical = file.canonicalFilePath();
+    const QString raw = canonical.isEmpty() ? file.absoluteFilePath() : canonical;
+    return QDir::cleanPath(QDir::fromNativeSeparators(raw));
+}
+
+static QString normalizePath(const QFileInfo& file)
+{
+    const QString canonical = file.canonicalFilePath();
+    const QString raw = canonical.isEmpty() ? file.absoluteFilePath() : canonical;
+    return QDir::cleanPath(QDir::fromNativeSeparators(raw));
+}
 
 static FileState makeFileState(const QString& path)
 {
@@ -27,7 +41,7 @@ Monitoring::Monitoring(ILogger* logger, QObject* parent)
 
 void Monitoring::addFile(const QString& path)
 {
-    const QString normalizedInput = FilePathHelper::normalizePath(path);
+    const QString normalizedInput = normalizePath(path);
     QFileInfo file(normalizedInput);
 
     if (!file.exists()) {
@@ -46,7 +60,7 @@ void Monitoring::addFile(const QString& path)
         return;
     }
 
-    const QString filePath = FilePathHelper::normalizePath(file);
+    const QString filePath = normalizePath(file);
 
     if (!monitoredFiles.contains(filePath)) {
         if (!watcher.addPath(filePath)) {
@@ -64,11 +78,11 @@ void Monitoring::addFile(const QString& path)
 
 void Monitoring::removeFile(const QString& path)
 {
-    const QString normalizedInput = FilePathHelper::normalizePath(path);
+    const QString normalizedInput = normalizePath(path);
     QFileInfo file(normalizedInput);
 
     if (file.exists() && file.isDir()) {
-        const QString dirBase = FilePathHelper::normalizePath(file);
+        const QString dirBase = normalizePath(file);
         QString dirPath = dirBase;
 
         if (!dirPath.endsWith('/')) {
@@ -94,7 +108,7 @@ void Monitoring::removeFile(const QString& path)
         return;
     }
 
-    const QString filePath = file.exists() ? FilePathHelper::normalizePath(file) : normalizedInput;
+    const QString filePath = file.exists() ? normalizePath(file) : normalizedInput;
     if (monitoredFiles.contains(filePath)) {
         monitoredFiles.remove(filePath);
         watcher.removePath(filePath);
@@ -107,7 +121,7 @@ void Monitoring::removeFile(const QString& path)
 
 void Monitoring::onFileChanged(const QString& path)
 {
-    const QString normalized = FilePathHelper::normalizePath(path);
+    const QString normalized = normalizePath(path);
     QFileInfo info(normalized);
 
     if (info.exists()) {

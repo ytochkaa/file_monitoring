@@ -10,7 +10,6 @@ SOURCES += \
     file_monitoring.cpp \
     monitoring.cpp \
     ConsoleLogger.cpp \
-    FilePathHelper.cpp \
     directorywalker.cpp
 
 HEADERS += \
@@ -18,5 +17,4 @@ HEADERS += \
     monitoring.h \
     ILogger.h \
     ConsoleLogger.h \
-    FilePathHelper.h \
     directorywalker.h

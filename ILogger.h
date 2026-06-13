@@ -16,7 +16,7 @@ public:
      * @param path путь к файлу.
      * @param size размер файла в байтах.
      */
-    virtual void logAdded(const QString& path, qint64 size) = 0;
+    virtual void logAdded(const QString& path, long int size) = 0;
 
     /**
      * @brief Вызывается при удалении файла из мониторинга.
@@ -29,7 +29,7 @@ public:
      * @param path путь к файлу.
      * @param size новый размер файла в байтах.
      */
-    virtual void logModified(const QString& path, qint64 size) = 0;
+    virtual void logModified(const QString& path, long int size) = 0;
 
     /**
      * @brief Вызывается при удалении наблюдаемого файла с диска.

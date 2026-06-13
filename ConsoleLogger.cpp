@@ -7,13 +7,13 @@ static QString makeTimestamp()
     return QDateTime::currentDateTime().toString(Qt::ISODate);
 }
 
-void ConsoleLogger::logFileEvent(const QString& tag, const QString& path, qint64 size)
+void ConsoleLogger::logFileEvent(const QString& tag, const QString& path, long int size)
 {
     qDebug().noquote() << makeTimestamp() << tag << path;
     qDebug().noquote() << "  Размер:" << size << "байт";
 }
 
-void ConsoleLogger::logAdded(const QString& path, qint64 size)
+void ConsoleLogger::logAdded(const QString& path, long int size)
 {
     logFileEvent("[ADDED]", path, size);
 }
@@ -23,7 +23,7 @@ void ConsoleLogger::logRemoved(const QString& path)
     qDebug().noquote() << makeTimestamp() << "[REMOVED]" << path;
 }
 
-void ConsoleLogger::logModified(const QString& path, qint64 size)
+void ConsoleLogger::logModified(const QString& path, long int size)
 {
     logFileEvent("[MODIFIED]", path, size);
 }

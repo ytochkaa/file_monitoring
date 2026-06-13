@@ -14,7 +14,7 @@ public:
      * @param path путь к файлу.
      * @param size размер файла в байтах.
      */
-    void logAdded(const QString& path, qint64 size) override;
+    void logAdded(const QString& path, long int size) override;
 
     /**
      * @brief Выводит сообщение об удалении файла из мониторинга.
@@ -27,7 +27,7 @@ public:
      * @param path путь к файлу.
      * @param size новый размер файла в байтах.
      */
-    void logModified(const QString& path, qint64 size) override;
+    void logModified(const QString& path, long int size) override;
 
     /**
      * @brief Выводит сообщение об удалении файла с диска.
@@ -48,7 +48,7 @@ private:
      * @param path путь к файлу.
      * @param size размер файла в байтах.
      */
-    void logFileEvent(const QString& tag, const QString& path, qint64 size);
+    void logFileEvent(const QString& tag, const QString& path, long int size);
 };
 
 #endif

@@ -10,7 +10,8 @@ SOURCES += \
     main.cpp \
     monitoring.cpp \
     ConsoleLogger.cpp \
-    directorywalker.cpp
+    directorywalker.cpp \
+    command_input.cpp
 
 HEADERS += \
     command_input.h \

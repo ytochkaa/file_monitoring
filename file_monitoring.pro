@@ -11,11 +11,13 @@ SOURCES += \
     monitoring.cpp \
     ConsoleLogger.cpp \
     directorywalker.cpp \
-    command_input.cpp
+    command_input.cpp \
+    pollingtimer.cpp
 
 HEADERS += \
     command_input.h \
     monitoring.h \
     ILogger.h \
     ConsoleLogger.h \
-    directorywalker.h
+    directorywalker.h \
+    pollingtimer.h

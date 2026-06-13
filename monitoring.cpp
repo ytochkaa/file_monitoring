@@ -1,6 +1,7 @@
 #include "monitoring.h"
 #include "ILogger.h"
 #include "directorywalker.h"
+#include "pollingtimer.h"
 #include <QFileInfo>
 #include <QDir>
 
@@ -25,14 +26,13 @@ static FileState makeFileState(const QString& path)
     return state;
 }
 
-Monitoring::Monitoring(ILogger* logger, QObject* parent)
+Monitoring::Monitoring(ILogger* logger, int intervalMs, QObject* parent)
     : QObject(parent)
-    , timer(new QTimer(this))
+    , poller(new PollingTimer(intervalMs, this))
     , logger(logger)
 {
     connect(&watcher, &QFileSystemWatcher::fileChanged, this, &Monitoring::onFileChanged);
-    connect(timer, &QTimer::timeout, this, &Monitoring::onTimerTick);
-    timer->start(100);
+    connect(poller, &PollingTimer::tick, this, &Monitoring::onTimerTick);
 }
 
 void Monitoring::addFile(const QString& path)
@@ -68,10 +68,11 @@ void Monitoring::addFile(const QString& path)
             return;
         }
         monitoredFiles.insert(filePath);
-        fileStates[filePath] = makeFileState(filePath);
+        const FileState state = makeFileState(filePath);
+        fileStates[filePath] = state;
         emit fileAdded(filePath);
         if (logger) {
-            logger->logAdded(filePath, fileStates[filePath].size);
+            logger->logAdded(filePath, state.size);
         }
     }
 }
@@ -125,10 +126,11 @@ void Monitoring::onFileChanged(const QString& path)
     QFileInfo info(normalized);
 
     if (info.exists()) {
-        fileStates[normalized] = makeFileState(normalized);
+        const FileState state = makeFileState(normalized);
+        fileStates[normalized] = state;
         emit fileModified(normalized);
         if (logger) {
-            logger->logModified(normalized, fileStates[normalized].size);
+            logger->logModified(normalized, state.size);
         }
         if (!watcher.files().contains(normalized) && !watcher.addPath(normalized)) {
             if (logger) {

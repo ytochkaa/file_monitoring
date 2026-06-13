@@ -25,14 +25,14 @@ static FileState makeFileState(const QString& path)
     return state;
 }
 
-Monitoring::Monitoring(ILogger* logger, QObject* parent)
+Monitoring::Monitoring(ILogger* logger, int intervalMs, QObject* parent)
     : QObject(parent)
     , timer(new QTimer(this))
     , logger(logger)
 {
     connect(&watcher, &QFileSystemWatcher::fileChanged, this, &Monitoring::onFileChanged);
     connect(timer, &QTimer::timeout, this, &Monitoring::onTimerTick);
-    timer->start(100);
+    timer->start(intervalMs);
 }
 
 void Monitoring::addFile(const QString& path)

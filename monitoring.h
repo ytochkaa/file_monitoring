@@ -19,7 +19,7 @@ struct FileState
 /**
  * @brief Класс для отслеживания изменений файлов.
  *
- * Использует QFileSystemWatcher и таймер опроса (100 мс) для обнаружения
+ * Использует QFileSystemWatcher и таймер опроса для обнаружения
  * изменений существования и размера наблюдаемых файлов.
  */
 class Monitoring : public QObject
@@ -29,10 +29,11 @@ class Monitoring : public QObject
 public:
     /**
      * @brief Конструктор.
-     * @param logger логгер для вывода событий. Если nullptr — вывод отключён.
-     * @param parent родительский объект Qt.
+     * @param logger     логгер для вывода событий. Если nullptr — вывод отключён.
+     * @param intervalMs интервал опроса таймера в миллисекундах.
+     * @param parent     родительский объект Qt.
      */
-    explicit Monitoring(ILogger* logger = nullptr, QObject* parent = nullptr);
+    explicit Monitoring(ILogger* logger = nullptr, int intervalMs = 100, QObject* parent = nullptr);
 
 public slots:
     /**

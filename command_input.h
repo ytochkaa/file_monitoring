@@ -27,38 +27,33 @@ protected:
         QTextStream in(stdin);
 
         while (true) {
-            qDebug() << "Введите команду (добавить <путь>, удалить <путь>, выход):";
+            qDebug() << "Введите команду (add <путь>, remove <путь>, exit):";
             QString line = in.readLine().trimmed();
 
             if (line.isEmpty()) {
-                qDebug() << "Пусто! Введите команду.";
                 continue;
             }
 
-            QString lowerLine = line.toLower();
+            QStringList parts = line.split(' ', Qt::SkipEmptyParts);
+            QString command = parts[0].toLower();
 
-            if (lowerLine == "exit" || lowerLine == "выход") {
+            if (command == "exit") {
                 qDebug() << "Выход из программы...";
                 emit exitRequested();
                 break;
             }
 
-            QStringList parts = line.split(' ', Qt::SkipEmptyParts);
-
-            if (parts.size() < 2) {
-                qDebug() << "Ошибка: добавить <путь> или удалить <путь>";
-                continue;
-            }
-
-            QString command = parts[0].toLower();
-            QString filePath = line.section(' ', 1);
-
-            if (command == "add" || command == "добавить") {
-                emit addRequested(filePath);
-                qDebug() << "Запрос на добавление файла:" << filePath;
-            } else if (command == "del" || command == "удалить") {
-                emit removeRequested(filePath);
-                qDebug() << "Запрос на удаление файла:" << filePath;
+            if (command == "add" || command == "remove") {
+                if (parts.size() < 2) {
+                    qDebug() << "Ошибка: укажите путь. Пример: add C:/files/test.txt";
+                    continue;
+                }
+                QString filePath = line.section(' ', 1);
+                if (command == "add") {
+                    emit addRequested(filePath);
+                } else {
+                    emit removeRequested(filePath);
+                }
             } else {
                 qDebug() << "Неизвестная команда:" << command;
             }

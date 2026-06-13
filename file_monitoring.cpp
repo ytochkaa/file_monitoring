@@ -1,5 +1,6 @@
 #include <QCoreApplication>
 #include <QDebug>
+#include <locale>
 
 #include "command_input.h"
 #include "ConsoleLogger.h"
@@ -7,6 +8,7 @@
 
 int main(int argc, char* argv[])
 {
+    setlocale(LC_ALL, "");
     qDebug() << "Запуск программы";
 
     QCoreApplication a(argc, argv);

@@ -1,10 +1,15 @@
 #include "ConsoleLogger.h"
 #include <QDebug>
+#include <QDateTime>
+
+static QString makeTimestamp()
+{
+    return QDateTime::currentDateTime().toString(Qt::ISODate);
+}
 
 void ConsoleLogger::logFileEvent(const QString& tag, const QString& path, qint64 size)
 {
     qDebug().noquote() << makeTimestamp() << tag << path;
-    qDebug().noquote() << "  Существует: да";
     qDebug().noquote() << "  Размер:" << size << "байт";
 }
 

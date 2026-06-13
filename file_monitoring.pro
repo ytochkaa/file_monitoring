@@ -7,7 +7,7 @@ CONFIG -= app_bundle
 TARGET = file_monitoring
 
 SOURCES += \
-    file_monitoring.cpp \
+    main.cpp \
     monitoring.cpp \
     ConsoleLogger.cpp \
     directorywalker.cpp

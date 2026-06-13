@@ -32,3 +32,8 @@ void ConsoleLogger::logDeleted(const QString& path)
 {
     qDebug().noquote() << makeTimestamp() << "[DELETED]" << path;
 }
+
+void ConsoleLogger::logError(const QString& message)
+{
+    qDebug().noquote() << makeTimestamp() << "[ERROR]" << message;
+}

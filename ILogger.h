@@ -36,6 +36,12 @@ public:
      * @param path путь к файлу.
      */
     virtual void logDeleted(const QString& path) = 0;
+
+    /**
+     * @brief Вызывается при возникновении ошибки.
+     * @param message описание ошибки.
+     */
+    virtual void logError(const QString& message) = 0;
 };
 
 #endif

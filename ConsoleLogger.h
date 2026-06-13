@@ -35,6 +35,12 @@ public:
      */
     void logDeleted(const QString& path) override;
 
+    /**
+     * @brief Выводит сообщение об ошибке.
+     * @param message описание ошибки.
+     */
+    void logError(const QString& message) override;
+
 private:
     /**
      * @brief Выводит событие файла с тегом, путём и размером.

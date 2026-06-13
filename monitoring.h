@@ -6,9 +6,9 @@
 #include <QSet>
 #include <QHash>
 #include <QDateTime>
-#include <QTimer>
 
 class ILogger;
+class PollingTimer;
 
 struct FileState
 {
@@ -77,7 +77,7 @@ private:
     QFileSystemWatcher watcher;
     QSet<QString> monitoredFiles;
     QHash<QString, FileState> fileStates;
-    QTimer* timer;
+    PollingTimer* poller;
     ILogger* logger;
 };
 

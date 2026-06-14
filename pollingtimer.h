@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QTimer>
-#include <memory>
 
 /**
  * @brief Периодически испускает сигнал tick() через заданный интервал.
@@ -27,7 +26,7 @@ signals:
     void tick();
 
 private:
-    std::shared_ptr<QTimer> timer;
+    QTimer timer;
 };
 
 #endif

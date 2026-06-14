@@ -10,8 +10,8 @@ int main(int argc, char* argv[])
     QCoreApplication a(argc, argv);
 
     ConsoleLogger logger;
-    Monitoring monitor(&logger);
-    CommandReader reader(&logger);
+    Monitoring monitor(logger);
+    CommandReader reader(logger);
 
     monitor.connectTo(reader);
 

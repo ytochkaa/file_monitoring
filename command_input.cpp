@@ -1,19 +1,26 @@
 #include "command_input.h"
+#include "ILogger.h"
+#include <QCoreApplication>
 #include <QTextStream>
 #include <QStringList>
 
-CommandReader::CommandReader(QObject* parent)
+CommandReader::CommandReader(ILogger* logger, QObject* parent)
     : QThread(parent)
+    , logger(logger)
 {
+    connect(this, &CommandReader::exitRequested,
+            QCoreApplication::instance(), &QCoreApplication::quit);
 }
 
 void CommandReader::run()
 {
     QTextStream in(stdin);
-    QTextStream out(stdout);
+
+    if (logger) {
+        logger->logInfo("Монитор файлов запущен. Команды: add <путь>, remove <путь>, list, help, exit");
+    }
 
     while (true) {
-        out << "Введите команду (add <путь>, remove <путь>, exit): " << Qt::flush;
         QString line = in.readLine().trimmed();
 
         if (line.isEmpty()) {
@@ -28,10 +35,15 @@ void CommandReader::run()
             break;
         }
 
-        if (command == "add" || command == "remove") {
+        if (command == "list") {
+            emit listRequested();
+        } else if (command == "help") {
+            emit helpRequested();
+        } else if (command == "add" || command == "remove") {
             if (parts.size() < 2) {
-                out << "Ошибка: укажите путь. Пример: add C:/files/test.txt\n"
-                    << Qt::flush;
+                if (logger) {
+                    logger->logError("Укажите путь. Пример: add C:/files/test.txt");
+                }
                 continue;
             }
             QString filePath = line.section(' ', 1);
@@ -41,8 +53,9 @@ void CommandReader::run()
                 emit removeRequested(filePath);
             }
         } else {
-            out << "Неизвестная команда: " << command << "\n"
-                << Qt::flush;
+            if (logger) {
+                logger->logError("Неизвестная команда: " + command);
+            }
         }
     }
 }

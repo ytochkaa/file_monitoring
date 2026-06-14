@@ -35,13 +35,13 @@ void Monitoring::connectTo(CommandReader& reader)
     connect(&reader, &CommandReader::helpRequested, this, &Monitoring::showHelp);
 }
 
-Monitoring::Monitoring(ILogger* logger, int intervalMs, QObject* parent)
+Monitoring::Monitoring(ILogger& logger, int intervalMs, QObject* parent)
     : QObject(parent)
-    , poller(std::make_shared<PollingTimer>(intervalMs))
+    , poller(intervalMs)
     , logger(logger)
 {
     connect(&watcher, &QFileSystemWatcher::fileChanged, this, &Monitoring::onFileChanged);
-    connect(poller.get(), &PollingTimer::tick, this, &Monitoring::onTimerTick);
+    connect(&poller, &PollingTimer::tick, this, &Monitoring::onTimerTick);
 }
 
 void Monitoring::addFile(const QString& path)
@@ -50,9 +50,7 @@ void Monitoring::addFile(const QString& path)
     QFileInfo file(normalizedInput);
 
     if (!file.exists()) {
-        if (logger) {
-            logger->logError("Нельзя добавить несуществующий путь: " + path);
-        }
+        logger.logError("Нельзя добавить несуществующий путь: " + path);
         return;
     }
 
@@ -71,18 +69,14 @@ void Monitoring::addFile(const QString& path)
 
     if (!monitoredFiles.contains(filePath)) {
         if (!watcher.addPath(filePath)) {
-            if (logger) {
-                logger->logError("Не удалось добавить путь в watcher: " + filePath);
-            }
+            logger.logError("Не удалось добавить путь в watcher: " + filePath);
             return;
         }
         monitoredFiles.insert(filePath);
         const FileState state = makeFileState(filePath);
         fileStates[filePath] = state;
         emit fileAdded(filePath);
-        if (logger) {
-            logger->logAdded(filePath, state.size);
-        }
+        logger.logAdded(filePath, state.size);
     }
 }
 
@@ -111,9 +105,7 @@ void Monitoring::removeFile(const QString& path)
             monitoredFiles.remove(filePath);
             watcher.removePath(filePath);
             fileStates.remove(filePath);
-            if (logger) {
-                logger->logRemoved(filePath, size);
-            }
+            logger.logRemoved(filePath, size);
         }
 
         return;
@@ -125,9 +117,7 @@ void Monitoring::removeFile(const QString& path)
         monitoredFiles.remove(filePath);
         watcher.removePath(filePath);
         fileStates.remove(filePath);
-        if (logger) {
-            logger->logRemoved(filePath, size);
-        }
+        logger.logRemoved(filePath, size);
     }
 }
 
@@ -140,13 +130,9 @@ void Monitoring::onFileChanged(const QString& path)
         const FileState state = makeFileState(normalized);
         fileStates[normalized] = state;
         emit fileModified(normalized);
-        if (logger) {
-            logger->logModified(normalized, state.size);
-        }
+        logger.logModified(normalized, state.size);
         if (!watcher.files().contains(normalized) && !watcher.addPath(normalized)) {
-            if (logger) {
-                logger->logError("Не удалось повторно добавить путь в watcher: " + normalized);
-            }
+            logger.logError("Не удалось повторно добавить путь в watcher: " + normalized);
         }
     } else {
         const long int size = fileStates.value(normalized).size;
@@ -154,9 +140,7 @@ void Monitoring::onFileChanged(const QString& path)
         monitoredFiles.remove(normalized);
         fileStates.remove(normalized);
         emit fileDeleted(normalized);
-        if (logger) {
-            logger->logDeleted(normalized, size);
-        }
+        logger.logDeleted(normalized, size);
     }
 }
 
@@ -173,18 +157,14 @@ void Monitoring::onTimerTick()
             monitoredFiles.remove(path);
             it = fileStates.erase(it);
             emit fileDeleted(path);
-            if (logger) {
-                logger->logDeleted(path, size);
-            }
+            logger.logDeleted(path, size);
             continue;
         }
 
         if (info.lastModified() != it->lastModified || info.size() != it->size) {
             it.value() = makeFileState(path);
             emit fileModified(path);
-            if (logger) {
-                logger->logModified(path, it->size);
-            }
+            logger.logModified(path, it->size);
         }
 
         ++it;
@@ -193,35 +173,27 @@ void Monitoring::onTimerTick()
 
 void Monitoring::listFiles()
 {
-    if (!logger) {
-        return;
-    }
-
     if (monitoredFiles.isEmpty()) {
-        logger->logInfo("Список отслеживаемых файлов пуст.");
+        logger.logInfo("Список отслеживаемых файлов пуст.");
         return;
     }
 
-    logger->logInfo("Отслеживаемые файлы:");
+    logger.logInfo("Отслеживаемые файлы:");
     int index = 1;
     for (const QString& filePath : qAsConst(monitoredFiles)) {
         QFileInfo file(filePath);
         const long int size = file.exists() ? static_cast<long int>(file.size()) : 0;
-        logger->logInfo(QString("  %1. %2 — %3 байт").arg(index++).arg(filePath).arg(size));
+        logger.logInfo(QString("  %1. %2 — %3 байт").arg(index++).arg(filePath).arg(size));
     }
-    logger->logInfo(QString("Всего: %1").arg(monitoredFiles.size()));
+    logger.logInfo(QString("Всего: %1").arg(monitoredFiles.size()));
 }
 
 void Monitoring::showHelp()
 {
-    if (!logger) {
-        return;
-    }
-
-    logger->logInfo("Справка по командам мониторинга:");
-    logger->logInfo("  add <путь>     - добавить файл или папку в мониторинг");
-    logger->logInfo("  remove <путь>  - удалить файл или папку из мониторинга");
-    logger->logInfo("  list           - показать все отслеживаемые файлы");
-    logger->logInfo("  help           - показать справку по командам");
-    logger->logInfo("  exit           - выйти из программы");
+    logger.logInfo("Справка по командам мониторинга:");
+    logger.logInfo("  add <путь>     - добавить файл или папку в мониторинг");
+    logger.logInfo("  remove <путь>  - удалить файл или папку из мониторинга");
+    logger.logInfo("  list           - показать все отслеживаемые файлы");
+    logger.logInfo("  help           - показать справку по командам");
+    logger.logInfo("  exit           - выйти из программы");
 }

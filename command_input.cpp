@@ -4,7 +4,7 @@
 #include <QTextStream>
 #include <QStringList>
 
-CommandReader::CommandReader(ILogger* logger, QObject* parent)
+CommandReader::CommandReader(ILogger& logger, QObject* parent)
     : QThread(parent)
     , logger(logger)
 {
@@ -16,9 +16,7 @@ void CommandReader::run()
 {
     QTextStream in(stdin);
 
-    if (logger) {
-        logger->logInfo("Монитор файлов запущен. Команды: add <путь>, remove <путь>, list, help, exit");
-    }
+    logger.logInfo("Монитор файлов запущен. Команды: add <путь>, remove <путь>, list, help, exit");
 
     while (true) {
         QString line = in.readLine().trimmed();
@@ -41,9 +39,7 @@ void CommandReader::run()
             emit helpRequested();
         } else if (command == "add" || command == "remove") {
             if (parts.size() < 2) {
-                if (logger) {
-                    logger->logError("Укажите путь. Пример: add C:/files/test.txt");
-                }
+                logger.logError("Укажите путь. Пример: add C:/files/test.txt");
                 continue;
             }
             QString filePath = line.section(' ', 1);
@@ -53,9 +49,7 @@ void CommandReader::run()
                 emit removeRequested(filePath);
             }
         } else {
-            if (logger) {
-                logger->logError("Неизвестная команда: " + command);
-            }
+            logger.logError("Неизвестная команда: " + command);
         }
     }
 }

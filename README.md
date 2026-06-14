@@ -56,62 +56,92 @@ exit            — выйти из программы
 
 ```mermaid
 classDiagram
+    class QObject {
+        <<Qt>>
+    }
+    class QThread {
+        <<Qt>>
+    }
+
     class ILogger {
         <<interface>>
-        +logAdded(path, size)
-        +logRemoved(path, size)
-        +logModified(path, size)
-        +logDeleted(path, size)
-        +logError(message)
-        +logInfo(message)
+        +logAdded(path : QString, size : long int) void
+        +logRemoved(path : QString, size : long int) void
+        +logModified(path : QString, size : long int) void
+        +logDeleted(path : QString, size : long int) void
+        +logError(message : QString) void
+        +logInfo(message : QString) void
     }
+
     class ConsoleLogger {
-        -logFileEvent(tag, path, size)
-        +logAdded(path, size)
-        +logRemoved(path, size)
-        +logModified(path, size)
-        +logDeleted(path, size)
-        +logError(message)
-        +logInfo(message)
+        -logFileEvent(tag : QString, path : QString, size : long int) void
+        +logAdded(path : QString, size : long int) void
+        +logRemoved(path : QString, size : long int) void
+        +logModified(path : QString, size : long int) void
+        +logDeleted(path : QString, size : long int) void
+        +logError(message : QString) void
+        +logInfo(message : QString) void
     }
+
     class Monitoring {
         -watcher : QFileSystemWatcher
-        -monitoredFiles : QSet
-        -fileStates : QHash
+        -monitoredFiles : QSet~QString~
+        -fileStates : QHash~QString, FileState~
         -poller : PollingTimer
         -logger : ILogger
-        +connectTo(reader)
-        +addFile(path)
-        +removeFile(path)
-        +listFiles()
-        +showHelp()
+        +Monitoring(logger : ILogger, intervalMs : int, parent : QObject)
+        +connectTo(reader : CommandReader) void
+        +«slot» addFile(path : QString) void
+        +«slot» removeFile(path : QString) void
+        +«slot» listFiles() void
+        +«slot» showHelp() void
+        -«slot» onFileChanged(path : QString) void
+        -«slot» onTimerTick() void
+        +«signal» fileAdded(path : QString) void
+        +«signal» fileModified(path : QString) void
+        +«signal» fileDeleted(path : QString) void
     }
+
     class PollingTimer {
         -timer : QTimer
-        +tick() signal
+        +PollingTimer(intervalMs : int, parent : QObject)
+        +«signal» tick() void
     }
+
     class CommandReader {
         -logger : ILogger
-        +run()
-        +addRequested(path) signal
-        +removeRequested(path) signal
-        +listRequested() signal
-        +helpRequested() signal
-        +exitRequested() signal
+        +CommandReader(logger : ILogger, parent : QObject)
+        #run() void
+        +«signal» addRequested(path : QString) void
+        +«signal» removeRequested(path : QString) void
+        +«signal» listRequested() void
+        +«signal» helpRequested() void
+        +«signal» exitRequested() void
     }
+
     class DirectoryWalker {
-        +listFilesRecursively(path) QVector
+        +listFilesRecursively(path : QString) QVector~QString~
     }
+
     class FileState {
+        <<struct>>
         +lastModified : QDateTime
         +size : long int
     }
 
+    QObject <|-- QThread
+    QObject <|-- Monitoring
+    QObject <|-- PollingTimer
+    QThread <|-- CommandReader
     ILogger <|.. ConsoleLogger
-    Monitoring *-- PollingTimer
-    Monitoring *-- "0..*" FileState
-    Monitoring --> ILogger : использует
-    CommandReader --> ILogger : использует
-    Monitoring ..> DirectoryWalker : использует
+    Monitoring "1" *-- "1" PollingTimer : poller
+    Monitoring "1" *-- "0..*" FileState : fileStates
+    Monitoring "1" --> "1" ILogger : logger
+    CommandReader "1" --> "1" ILogger : logger
+    Monitoring ..> DirectoryWalker : use
     Monitoring ..> CommandReader : connectTo
 ```
+
+Обозначения: `<|--` — обобщение (наследование), `<|..` — реализация интерфейса,
+`*--` — композиция (агрегат владеет частью), `-->` — направленная ассоциация,
+`..>` — зависимость; в кавычках указана кратность концов связей.

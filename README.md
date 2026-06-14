@@ -22,11 +22,11 @@
 ## Архитектура
 
 - `Monitoring` — основной класс, отслеживает файлы через `QFileSystemWatcher` и таймер опроса (100 мс)
+- `PollingTimer` — периодически испускает сигнал `tick()` для опроса состояния файлов
 - `ILogger` — абстрактный интерфейс логирования
 - `ConsoleLogger` — реализация, выводящая события в консоль
 - `CommandReader` — читает команды пользователя из stdin в отдельном потоке
 - `DirectoryWalker` — рекурсивно обходит файлы в директории
-- `FilePathHelper` — нормализует пути к файлам
 
 ## Сборка
 
@@ -45,7 +45,73 @@ cmake --build .
 ## Использование
 
 ```
-добавить <путь>   — добавить файл или папку в мониторинг
-удалить <путь>    — удалить файл из мониторинга
-выход             — выйти из программы
+add <путь>      — добавить файл или папку в мониторинг
+remove <путь>   — удалить файл или папку из мониторинга
+list            — показать список отслеживаемых файлов
+help            — показать справку по командам
+exit            — выйти из программы
+```
+
+## Диаграмма классов
+
+```mermaid
+classDiagram
+    class ILogger {
+        <<interface>>
+        +logAdded(path, size)
+        +logRemoved(path, size)
+        +logModified(path, size)
+        +logDeleted(path, size)
+        +logError(message)
+        +logInfo(message)
+    }
+    class ConsoleLogger {
+        -logFileEvent(tag, path, size)
+        +logAdded(path, size)
+        +logRemoved(path, size)
+        +logModified(path, size)
+        +logDeleted(path, size)
+        +logError(message)
+        +logInfo(message)
+    }
+    class Monitoring {
+        -watcher : QFileSystemWatcher
+        -monitoredFiles : QSet
+        -fileStates : QHash
+        -poller : PollingTimer
+        -logger : ILogger
+        +connectTo(reader)
+        +addFile(path)
+        +removeFile(path)
+        +listFiles()
+        +showHelp()
+    }
+    class PollingTimer {
+        -timer : QTimer
+        +tick() signal
+    }
+    class CommandReader {
+        -logger : ILogger
+        +run()
+        +addRequested(path) signal
+        +removeRequested(path) signal
+        +listRequested() signal
+        +helpRequested() signal
+        +exitRequested() signal
+    }
+    class DirectoryWalker {
+        +listFilesRecursively(path) QVector
+    }
+    class FileState {
+        +lastModified : QDateTime
+        +size : long int
+    }
+
+    ILogger <|.. ConsoleLogger
+    Monitoring *-- PollingTimer
+    Monitoring *-- "0..*" FileState
+    Monitoring --> ILogger : использует
+    CommandReader --> ILogger : использует
+    Monitoring ..> DirectoryWalker : использует
+    Monitoring ..> CommandReader : connectTo
 ```

@@ -1,4 +1,5 @@
 #include "monitoring.h"
+#include "command_input.h"
 #include "ILogger.h"
 #include "directorywalker.h"
 #include "pollingtimer.h"
@@ -26,13 +27,21 @@ static FileState makeFileState(const QString& path)
     return state;
 }
 
+void Monitoring::connectTo(CommandReader& reader)
+{
+    connect(&reader, &CommandReader::addRequested, this, &Monitoring::addFile);
+    connect(&reader, &CommandReader::removeRequested, this, &Monitoring::removeFile);
+    connect(&reader, &CommandReader::listRequested, this, &Monitoring::listFiles);
+    connect(&reader, &CommandReader::helpRequested, this, &Monitoring::showHelp);
+}
+
 Monitoring::Monitoring(ILogger* logger, int intervalMs, QObject* parent)
     : QObject(parent)
-    , poller(new PollingTimer(intervalMs, this))
+    , poller(std::make_shared<PollingTimer>(intervalMs))
     , logger(logger)
 {
     connect(&watcher, &QFileSystemWatcher::fileChanged, this, &Monitoring::onFileChanged);
-    connect(poller, &PollingTimer::tick, this, &Monitoring::onTimerTick);
+    connect(poller.get(), &PollingTimer::tick, this, &Monitoring::onTimerTick);
 }
 
 void Monitoring::addFile(const QString& path)
@@ -98,11 +107,12 @@ void Monitoring::removeFile(const QString& path)
         }
 
         for (const QString& filePath : qAsConst(toRemove)) {
+            const long int size = fileStates.value(filePath).size;
             monitoredFiles.remove(filePath);
             watcher.removePath(filePath);
             fileStates.remove(filePath);
             if (logger) {
-                logger->logRemoved(filePath);
+                logger->logRemoved(filePath, size);
             }
         }
 
@@ -111,11 +121,12 @@ void Monitoring::removeFile(const QString& path)
 
     const QString filePath = file.exists() ? normalizePath(file) : normalizedInput;
     if (monitoredFiles.contains(filePath)) {
+        const long int size = fileStates.value(filePath).size;
         monitoredFiles.remove(filePath);
         watcher.removePath(filePath);
         fileStates.remove(filePath);
         if (logger) {
-            logger->logRemoved(filePath);
+            logger->logRemoved(filePath, size);
         }
     }
 }
@@ -138,11 +149,13 @@ void Monitoring::onFileChanged(const QString& path)
             }
         }
     } else {
+        const long int size = fileStates.value(normalized).size;
+        watcher.removePath(normalized);
         monitoredFiles.remove(normalized);
         fileStates.remove(normalized);
         emit fileDeleted(normalized);
         if (logger) {
-            logger->logDeleted(normalized);
+            logger->logDeleted(normalized, size);
         }
     }
 }
@@ -155,12 +168,13 @@ void Monitoring::onTimerTick()
         QFileInfo info(path);
 
         if (!info.exists()) {
+            const long int size = it->size;
             watcher.removePath(path);
             monitoredFiles.remove(path);
             it = fileStates.erase(it);
             emit fileDeleted(path);
             if (logger) {
-                logger->logDeleted(path);
+                logger->logDeleted(path, size);
             }
             continue;
         }
@@ -179,61 +193,35 @@ void Monitoring::onTimerTick()
 
 void Monitoring::listFiles()
 {
-    qDebug() << "\nСписок отслеживаемых файлов:";
+    if (!logger) {
+        return;
+    }
 
     if (monitoredFiles.isEmpty()) {
-        qDebug() << "No monitored files";
-    } else {
-        int index = 1;
-        for (const QString& filePath : qAsConst(monitoredFiles)) {
-            QFileInfo file(filePath);
-            qDebug() << QString("%1. %2 (size: %3 bytes)")
-                            .arg(index++)
-                            .arg(filePath)
-                            .arg(file.exists() ? file.size() : 0);
-        }
+        logger->logInfo("Список отслеживаемых файлов пуст.");
+        return;
     }
-    qDebug() << "Total files:" << monitoredFiles.size() << "\n";
-}
 
-void Monitoring::showStatus(const QString& path)
-{
-    const QString normalizedPath = normalizePath(path);
-    QFileInfo file(normalizedPath);
-    qDebug() << "\nFile information:";
-    qDebug() << "Path:" << normalizedPath;
-
-    if (!file.exists()) {
-        qDebug() << "File does not exist";
-    } else {
-        qDebug() << "File exists";
-        qDebug() << "Size:" << file.size() << "bytes";
-        qDebug() << "Last modified:" << file.lastModified().toString(Qt::ISODate);
-        qDebug() << "Location:" << file.absolutePath();
-        qDebug() << "Monitored:" << (monitoredFiles.contains(normalizedPath) ? "Yes" : "No");
+    logger->logInfo("Отслеживаемые файлы:");
+    int index = 1;
+    for (const QString& filePath : qAsConst(monitoredFiles)) {
+        QFileInfo file(filePath);
+        const long int size = file.exists() ? static_cast<long int>(file.size()) : 0;
+        logger->logInfo(QString("  %1. %2 — %3 байт").arg(index++).arg(filePath).arg(size));
     }
-    qDebug() << "";
-}
-
-void Monitoring::clearAll()
-{
-    int count = monitoredFiles.size();
-    for (const QString& file : monitoredFiles) {
-        watcher.removePath(file);
-    }
-    monitoredFiles.clear();
-    fileStates.clear();
-    qDebug() << "\nУдалено" << count << "файлов из мониторинга\n";
+    logger->logInfo(QString("Всего: %1").arg(monitoredFiles.size()));
 }
 
 void Monitoring::showHelp()
 {
-    qDebug() << "\nСправка по командам мониторинга:";
-    qDebug() << "  add <path>      - добавить файл или папку в мониторинг";
-    qDebug() << "  remove <path>   - удалить файл или папку из мониторинга";
-    qDebug() << "  list            - показать все отслеживаемые файлы";
-    qDebug() << "  status <path>   - показать информацию о файле";
-    qDebug() << "  clear           - удалить все файлы из мониторинга";
-    qDebug() << "  help            - показать справку по командам";
-    qDebug() << "  exit            - выйти из программы\n";
+    if (!logger) {
+        return;
+    }
+
+    logger->logInfo("Справка по командам мониторинга:");
+    logger->logInfo("  add <путь>     - добавить файл или папку в мониторинг");
+    logger->logInfo("  remove <путь>  - удалить файл или папку из мониторинга");
+    logger->logInfo("  list           - показать все отслеживаемые файлы");
+    logger->logInfo("  help           - показать справку по командам");
+    logger->logInfo("  exit           - выйти из программы");
 }

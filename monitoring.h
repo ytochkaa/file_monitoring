@@ -6,9 +6,11 @@
 #include <QSet>
 #include <QHash>
 #include <QDateTime>
+#include <memory>
 
 class ILogger;
 class PollingTimer;
+class CommandReader;
 
 struct FileState
 {
@@ -35,6 +37,12 @@ public:
      */
     explicit Monitoring(ILogger* logger = nullptr, int intervalMs = 100, QObject* parent = nullptr);
 
+    /**
+     * @brief Подключает сигналы CommandReader к слотам Monitoring.
+     * @param reader источник команд пользователя.
+     */
+    void connectTo(CommandReader& reader);
+
 public slots:
     /**
      * @brief Добавляет файл или директорию в мониторинг.
@@ -50,8 +58,6 @@ public slots:
      */
     void removeFile(const QString& path);
     void listFiles();
-    void showStatus(const QString& path);
-    void clearAll();
     void showHelp();
 
 signals:
@@ -81,7 +87,7 @@ private:
     QFileSystemWatcher watcher;
     QSet<QString> monitoredFiles;
     QHash<QString, FileState> fileStates;
-    PollingTimer* poller;
+    std::shared_ptr<PollingTimer> poller;
     ILogger* logger;
 };
 

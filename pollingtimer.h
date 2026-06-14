@@ -2,8 +2,8 @@
 #define POLLINGTIMER_H
 
 #include <QObject>
-
-class QTimer;
+#include <QTimer>
+#include <memory>
 
 /**
  * @brief Периодически испускает сигнал tick() через заданный интервал.
@@ -27,7 +27,7 @@ signals:
     void tick();
 
 private:
-    QTimer* timer;
+    std::shared_ptr<QTimer> timer;
 };
 
 #endif

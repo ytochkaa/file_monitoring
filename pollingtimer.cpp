@@ -1,10 +1,9 @@
 #include "pollingtimer.h"
-#include <QTimer>
 
 PollingTimer::PollingTimer(int intervalMs, QObject* parent)
     : QObject(parent)
-    , timer(new QTimer(this))
+    , timer(std::make_shared<QTimer>())
 {
-    connect(timer, &QTimer::timeout, this, &PollingTimer::tick);
+    connect(timer.get(), &QTimer::timeout, this, &PollingTimer::tick);
     timer->start(intervalMs);
 }

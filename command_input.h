@@ -16,10 +16,10 @@ class CommandReader : public QThread
 public:
     /**
      * @brief Конструктор.
-     * @param logger логгер для вывода подсказок и ошибок ввода. Если nullptr — вывод отключён.
+     * @param logger логгер для вывода подсказок и ошибок ввода.
      * @param parent родительский объект Qt.
      */
-    explicit CommandReader(ILogger* logger = nullptr, QObject* parent = nullptr);
+    explicit CommandReader(ILogger& logger, QObject* parent = nullptr);
 
 signals:
     void addRequested(const QString& path);
@@ -32,7 +32,7 @@ protected:
     void run() override;
 
 private:
-    ILogger* logger;
+    ILogger& logger;
 };
 
 #endif

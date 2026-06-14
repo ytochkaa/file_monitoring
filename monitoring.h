@@ -6,10 +6,9 @@
 #include <QSet>
 #include <QHash>
 #include <QDateTime>
-#include <memory>
+#include "pollingtimer.h"
 
 class ILogger;
-class PollingTimer;
 class CommandReader;
 
 struct FileState
@@ -31,11 +30,11 @@ class Monitoring : public QObject
 public:
     /**
      * @brief Конструктор.
-     * @param logger     логгер для вывода событий. Если nullptr — вывод отключён.
+     * @param logger     логгер для вывода событий.
      * @param intervalMs интервал опроса таймера в миллисекундах.
      * @param parent     родительский объект Qt.
      */
-    explicit Monitoring(ILogger* logger = nullptr, int intervalMs = 100, QObject* parent = nullptr);
+    explicit Monitoring(ILogger& logger, int intervalMs = 100, QObject* parent = nullptr);
 
     /**
      * @brief Подключает сигналы CommandReader к слотам Monitoring.
@@ -87,8 +86,8 @@ private:
     QFileSystemWatcher watcher;
     QSet<QString> monitoredFiles;
     QHash<QString, FileState> fileStates;
-    std::shared_ptr<PollingTimer> poller;
-    ILogger* logger;
+    PollingTimer poller;
+    ILogger& logger;
 };
 
 #endif

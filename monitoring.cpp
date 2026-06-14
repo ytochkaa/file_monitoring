@@ -198,7 +198,7 @@ void Monitoring::listFiles()
 
 void Monitoring::showStatus(const QString& path)
 {
-    const QString normalizedPath = FilePathHelper::normalizePath(path);
+    const QString normalizedPath = normalizePath(path);
     QFileInfo file(normalizedPath);
     qDebug() << "\nFile information:";
     qDebug() << "Path:" << normalizedPath;
